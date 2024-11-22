@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, doc, getDocs, collection, query, where, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDocs, collection, query, where, updateDoc, getDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -33,13 +33,53 @@ onAuthStateChanged(auth, (user) => {
 // Manejar el formulario de inicio de sesión
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('admin-email').value;
-  const password = document.getElementById('admin-password').value;
+  const email = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-password').value.trim();
 
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
     alert("Error en el inicio de sesión: " + error.message);
+  }
+});
+
+// Manejar el formulario de creación de usuarios
+document.getElementById('user-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const username = document.getElementById('username').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const expirationDateInput = document.getElementById('expirationDate').value;
+
+  // Validar campos
+  if (!username || !email || !password || !expirationDateInput) {
+    alert("Por favor, completa todos los campos.");
+    return;
+  }
+
+  try {
+    // Convertir la fecha de expiración a formato Timestamp de Firestore
+    const expirationDate = new Date(expirationDateInput);
+
+    // Referencia a la colección 'users' en Firestore
+    const usersCollection = collection(db, 'users');
+
+    // Crear un nuevo documento en Firestore
+    await addDoc(usersCollection, {
+      username: username,
+      email: email,
+      password: password,
+      expirationDate: expirationDate,
+      adminId: auth.currentUser.uid // Asegurarse de vincular al administrador actual
+    });
+
+    alert("Usuario creado exitosamente.");
+    document.getElementById('user-form').reset(); // Limpiar el formulario
+    listarUsuarios(); // Actualizar la lista de usuarios
+  } catch (error) {
+    console.error("Error al crear usuario:", error);
+    alert("Error al crear usuario: " + error.message);
   }
 });
 
@@ -86,7 +126,7 @@ async function listarUsuarios(filter = "") {
   }
 }
 
-// Función para renovar la cuenta del usuario desde la fecha adecuada
+// Función para renovar la cuenta del usuario
 window.renovarUsuario = async function (userId, months) {
   try {
     const userRef = doc(db, 'users', userId);
