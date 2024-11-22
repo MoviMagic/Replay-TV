@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, doc, getDocs, collection, query, where, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDocs, collection, query, where, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -67,6 +67,7 @@ async function listarUsuarios(filter = "") {
         userElement.innerHTML = `
           <p><strong>Nombre:</strong> ${userData.username}</p>
           <p><strong>Email:</strong> ${userData.email}</p>
+          <p><strong>Contraseña:</strong> ${userData.password || "No disponible"}</p>
           <p><strong>Fecha de Expiración:</strong> ${userData.expirationDate.toDate().toLocaleDateString()}</p>
           <div class="user-actions">
             <button onclick="renovarUsuario('${doc.id}', 1)">Renovar 1 mes</button>
@@ -74,6 +75,7 @@ async function listarUsuarios(filter = "") {
             <button onclick="renovarUsuario('${doc.id}', 6)">Renovar 6 meses</button>
             <button onclick="renovarUsuario('${doc.id}', 12)">Renovar 12 meses</button>
           </div>
+          <button class="delete-button" onclick="eliminarUsuario('${doc.id}')">Eliminar Usuario</button>
         `;
         usersContainer.appendChild(userElement);
       });
@@ -84,7 +86,7 @@ async function listarUsuarios(filter = "") {
   }
 }
 
-// Función para renovar la cuenta del usuario desde la fecha adecuada (fecha actual o fecha de vencimiento)
+// Función para renovar la cuenta del usuario desde la fecha adecuada
 window.renovarUsuario = async function (userId, months) {
   try {
     const userRef = doc(db, 'users', userId);
@@ -95,12 +97,10 @@ window.renovarUsuario = async function (userId, months) {
       let expirationDate = userData.expirationDate.toDate(); // Fecha de vencimiento actual del usuario
       const now = new Date(); // Fecha actual
 
-      // Comprobar si el usuario está vencido o no
       if (expirationDate < now) {
         expirationDate = now; // Si está vencido, iniciar renovación desde hoy
       }
       
-      // Sumar los meses a la fecha de inicio de la renovación (fecha actual o fecha de vencimiento)
       expirationDate.setMonth(expirationDate.getMonth() + months);
 
       await updateDoc(userRef, { expirationDate: expirationDate });
@@ -113,6 +113,19 @@ window.renovarUsuario = async function (userId, months) {
   }
 };
 
+// Función para eliminar un usuario de Firestore
+window.eliminarUsuario = async function (userId) {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await deleteDoc(userRef);
+    alert("Usuario eliminado exitosamente.");
+    listarUsuarios(); // Actualizar la lista de usuarios
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    alert("Error al eliminar usuario: " + error.message);
+  }
+};
+
 // Filtrar usuarios al escribir en el campo de búsqueda
 document.getElementById('search-bar').addEventListener('input', (e) => {
   const filter = e.target.value;
@@ -122,9 +135,9 @@ document.getElementById('search-bar').addEventListener('input', (e) => {
 // Cerrar sesión del administrador
 document.getElementById('logout-btn').addEventListener('click', async () => {
   await signOut(auth);
-  localStorage.removeItem("isLoggedIn");
   location.reload();
 });
+
 // Redirigir al enlace de contenidos al hacer clic en el botón
 document.getElementById('content-btn').addEventListener('click', () => {
   window.location.href = "https://movimagic.github.io/generador_contenidos/";
