@@ -5,7 +5,6 @@ import {
   onAuthStateChanged, 
   signOut, 
   createUserWithEmailAndPassword, 
-  updatePassword, 
   deleteUser 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { 
@@ -34,137 +33,32 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Verificar si el usuario es administrador
-async function isAdmin(uid) {
-  try {
-    const adminDoc = await getDoc(doc(db, 'adminUsers', uid));
-    return adminDoc.exists() && adminDoc.data().role === 'admin';
-  } catch (error) {
-    console.error("Error al verificar si el usuario es administrador:", error);
-    return false;
-  }
-}
-
-// Mostrar mensajes debajo del botón "Agregar Usuario"
-function showMessage(message, color) {
-  const messageElement = document.getElementById('message');
-  messageElement.innerText = message;
-  messageElement.style.color = color;
-  messageElement.style.marginTop = "10px";
-}
-
-// Manejo de la autenticación
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    const isUserAdmin = await isAdmin(user.uid);
-
-    if (isUserAdmin) {
-      document.getElementById('login-modal').style.display = 'none';
-      document.getElementById('admin-panel').style.display = 'block';
-      document.getElementById('admin-email-display').innerText = `Administrador: ${user.email}`;
-      listarUsuarios(user.uid);
-    }
-  } else {
-    document.getElementById('login-modal').style.display = 'flex';
-    document.getElementById('admin-panel').style.display = 'none';
-  }
-});
-
-// Crear un nuevo usuario
-document.getElementById('user-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const username = document.getElementById('username').value;
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const expirationDate = new Date(document.getElementById('expirationDate').value);
-
-  const adminUID = auth.currentUser.uid;
-
-  try {
-    // Verificar si el usuario ya existe
-    const userQuery = query(collection(db, 'users'), where("email", "==", email));
-    const querySnapshot = await getDocs(userQuery);
-
-    if (!querySnapshot.empty) {
-      showMessage("Usuario ya existe", "yellow");
-      return;
-    }
-
-    // Crear usuario en Firebase Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const userUID = userCredential.user.uid;
-
-    // Guardar datos en Firestore
-    await setDoc(doc(db, 'users', userUID), {
-      adminId: adminUID,
-      username: username,
-      email: email,
-      password: password,
-      expirationDate: expirationDate
-    });
-
-    showMessage("Usuario creado exitosamente", "green");
-    listarUsuarios(adminUID);
-    document.getElementById('user-form').reset();
-  } catch (error) {
-    console.error("Error al crear usuario:", error);
-    showMessage("Error al crear usuario: " + error.message, "red");
-  }
-});
-
-// Editar un usuario
-window.editarUsuario = async function (userId) {
-  const newUsername = prompt("Ingrese el nuevo nombre de usuario:");
-  const newPassword = prompt("Ingrese la nueva contraseña:");
-
-  if (!newUsername || !newPassword) {
-    alert("Los campos no pueden estar vacíos.");
-    return;
-  }
-
-  try {
-    // Actualizar en Firestore
-    const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, {
-      username: newUsername,
-      password: newPassword
-    });
-
-    // Actualizar en Firebase Authentication
-    const userCredential = await getDoc(userRef);
-    if (userCredential.exists()) {
-      const userAuth = auth.currentUser;
-      if (userAuth.uid === userId) {
-        await updatePassword(userAuth, newPassword);
-      }
-    }
-
-    alert("Usuario actualizado correctamente.");
-    listarUsuarios(auth.currentUser.uid);
-  } catch (error) {
-    console.error("Error al editar usuario:", error);
-    alert("Error al editar usuario: " + error.message);
-  }
-};
-
-// Eliminar un usuario
+// Función para eliminar un usuario
 window.eliminarUsuario = async function (userId) {
   const confirmDelete = confirm("¿Estás seguro de que deseas eliminar este usuario?");
-
   if (!confirmDelete) return;
 
   try {
-    // Eliminar de Firebase Authentication
-    const userCredential = await getDoc(doc(db, 'users', userId));
-    if (userCredential.exists()) {
-      const userAuth = auth.currentUser;
-      if (userAuth.uid === userId) {
-        await deleteUser(userAuth);
-      }
+    // Obtener las credenciales del usuario a eliminar desde Firestore
+    const userDoc = await getDoc(doc(db, "users", userId));
+    if (!userDoc.exists()) {
+      alert("Usuario no encontrado en Firestore.");
+      return;
     }
 
-    // Eliminar de Firestore
-    await deleteDoc(doc(db, 'users', userId));
+    // Obtener email y contraseña para volver a autenticar antes de eliminar
+    const userData = userDoc.data();
+    const { email, password } = userData;
+
+    // Reautenticar como el usuario para obtener permisos de eliminación
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Eliminar el usuario de Firebase Authentication
+    await deleteUser(user);
+
+    // Eliminar el usuario de Firestore
+    await deleteDoc(doc(db, "users", userId));
 
     alert("Usuario eliminado correctamente.");
     listarUsuarios(auth.currentUser.uid);
@@ -174,7 +68,7 @@ window.eliminarUsuario = async function (userId) {
   }
 };
 
-// Listar usuarios
+// Función para listar usuarios
 async function listarUsuarios(adminUID) {
   const usersContainer = document.getElementById('users-list');
   usersContainer.innerHTML = '';
