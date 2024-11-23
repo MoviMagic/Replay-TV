@@ -2,22 +2,19 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
-  onAuthStateChanged, 
-  signOut, 
   createUserWithEmailAndPassword, 
-  deleteUser 
+  deleteUser, 
+  signOut 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { 
   getFirestore, 
   doc, 
   setDoc, 
-  getDocs, 
+  deleteDoc, 
   collection, 
-  query, 
-  where, 
-  updateDoc, 
+  addDoc, 
   getDoc, 
-  deleteDoc 
+  getDocs 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -33,55 +30,68 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Manejo del Inicio de Sesión
-document.getElementById('login-form').addEventListener('submit', async (e) => {
+// Crear Usuario con Dispositivos
+document.getElementById('user-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('admin-email').value;
-  const password = document.getElementById('admin-password').value;
+
+  const username = document.getElementById('username').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const expirationDate = new Date(document.getElementById('expirationDate').value);
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userUID = userCredential.user.uid;
 
-    const adminDoc = await getDoc(doc(db, 'adminUsers', user.uid));
-    if (!adminDoc.exists() || adminDoc.data().role !== 'admin') {
-      alert("No tienes permisos para acceder al panel administrativo.");
-      await signOut(auth);
-      return;
-    }
+    await setDoc(doc(db, 'users', userUID), {
+      adminId: auth.currentUser.uid,
+      username: username,
+      email: email,
+      password: password,
+      expirationDate: expirationDate
+    });
 
-    document.getElementById('login-modal').style.display = 'none';
-    document.getElementById('admin-panel').style.display = 'block';
-    document.getElementById('admin-email-display').innerText = `Administrador: ${email}`;
+    const devicesCollectionRef = collection(db, `users/${userUID}/devices`);
+    await addDoc(devicesCollectionRef, {
+      deviceName: "Default Device",
+      lastLogin: new Date(),
+      platform: "Unknown"
+    });
+
+    alert("Usuario creado con dispositivo inicial.");
     listarUsuarios();
   } catch (error) {
-    console.error("Error al iniciar sesión:", error);
-    alert("Error al iniciar sesión: " + error.message);
+    console.error("Error al crear usuario:", error);
+    alert("Error al crear usuario: " + error.message);
   }
 });
 
-// Listar Usuarios
+// Listar Usuarios y sus Dispositivos
 async function listarUsuarios() {
   const usersContainer = document.getElementById('users-list');
   usersContainer.innerHTML = '';
 
   try {
-    const q = query(collection(db, 'users'));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(collection(db, 'users'));
 
     if (querySnapshot.empty) {
       usersContainer.innerHTML = "<p>No hay usuarios creados.</p>";
     } else {
-      querySnapshot.forEach((doc) => {
-        const userData = doc.data();
+      querySnapshot.forEach(async (docSnapshot) => {
+        const userData = docSnapshot.data();
 
         const userElement = document.createElement('div');
         userElement.innerHTML = `
           <p><strong>Nombre:</strong> ${userData.username}</p>
           <p><strong>Email:</strong> ${userData.email}</p>
-          <button onclick="eliminarUsuario('${doc.id}')">Eliminar Usuario</button>
+          <div id="devices-${docSnapshot.id}" class="devices-container">
+            <p>Cargando dispositivos...</p>
+          </div>
+          <button onclick="eliminarUsuario('${docSnapshot.id}')">Eliminar Usuario</button>
         `;
         usersContainer.appendChild(userElement);
+
+        cargarDispositivos(docSnapshot.id);
       });
     }
   } catch (error) {
@@ -89,20 +99,52 @@ async function listarUsuarios() {
   }
 }
 
-// Eliminar Usuario
-window.eliminarUsuario = async function (userId) {
+async function cargarDispositivos(userId) {
+  const devicesContainer = document.getElementById(`devices-${userId}`);
+
   try {
+    const devicesSnapshot = await getDocs(collection(db, `users/${userId}/devices`));
+    devicesContainer.innerHTML = "";
+
+    devicesSnapshot.forEach((deviceDoc) => {
+      const deviceData = deviceDoc.data();
+      devicesContainer.innerHTML += `
+        <div class="device-item">
+          <p>${deviceData.deviceName} (${deviceData.platform})</p>
+          <button onclick="eliminarDispositivo('${userId}', '${deviceDoc.id}')">Eliminar</button>
+        </div>
+      `;
+    });
+  } catch (error) {
+    console.error("Error al cargar dispositivos:", error);
+  }
+}
+
+window.eliminarUsuario = async function (userId) {
+  const confirmDelete = confirm("¿Eliminar usuario y sus dispositivos?");
+  if (!confirmDelete) return;
+
+  try {
+    const devicesSnapshot = await getDocs(collection(db, `users/${userId}/devices`));
+    devicesSnapshot.forEach(async (doc) => await deleteDoc(doc.ref));
     await deleteDoc(doc(db, 'users', userId));
-    alert("Usuario eliminado correctamente.");
+
+    alert("Usuario eliminado.");
     listarUsuarios();
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
-    alert("Error al eliminar usuario: " + error.message);
   }
 };
 
-// Cerrar Sesión
-document.getElementById('logout-btn').addEventListener('click', async () => {
-  await signOut(auth);
-  location.reload();
-});
+window.eliminarDispositivo = async function (userId, deviceId) {
+  const confirmDelete = confirm("¿Eliminar este dispositivo?");
+  if (!confirmDelete) return;
+
+  try {
+    await deleteDoc(doc(db, `users/${userId}/devices/${deviceId}`));
+    alert("Dispositivo eliminado.");
+    cargarDispositivos(userId);
+  } catch (error) {
+    console.error("Error al eliminar dispositivo:", error);
+  }
+};
