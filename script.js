@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, doc, getDocs, collection, query, where, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// Configuración de Firebase
+// Configuración de Firebase para Replay TV
 const firebaseConfig = {
   apiKey: "AIzaSyDnGHxXiUkm1Onblu3en-V2v5Yxk9OnFL8",
   authDomain: "replay-tv-33de1.firebaseapp.com",
@@ -125,6 +125,7 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   localStorage.removeItem("isLoggedIn");
   location.reload();
 });
+
 // Redirigir al enlace de contenidos al hacer clic en el botón
 document.getElementById('content-btn').addEventListener('click', () => {
   window.location.href = "https://movimagic.github.io/generador_contenidos/";
