@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Videos Publicitarios</title>
+    <link rel="stylesheet" href="featuredVideos_styles.css">
+    <!-- Firebase App -->
+    <script src="https://www.gstatic.com/firebasejs/9.12.1/firebase-app-compat.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/9.12.1/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.12.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard de Videos Publicitarios</h1>
+        <form id="adVideoForm">
+            <div class="form-group">
+                <label for="title">Título Principal</label>
+                <input type="text" id="title" placeholder="Ejemplo: Películas 2024" required>
+            </div>
+            <div class="form-group">
+                <label for="videoTitle">Título del Video</label>
+                <input type="text" id="videoTitle" placeholder="Ejemplo: Lo que se viene..." required>
+            </div>
+            <div class="form-group">
+                <label for="description">Descripción</label>
+                <input type="text" id="description" placeholder="Ejemplo: Estrenos del 2024" required>
+            </div>
+            <div class="form-group">
+                <label for="videoUrl">URL del Video</label>
+                <input type="text" id="videoUrl" placeholder="Ejemplo: https://yourclubox.com..." required>
+            </div>
+            <div class="form-group">
+                <label for="isActive">¿Está Activo?</label>
+                <select id="isActive" required>
+                    <option value="true">Sí</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+            <button type="submit">Agregar Video</button>
+        </form>
+        <div id="successMessage" class="hidden">Video agregado con éxito!</div>
+    </div>
+
+    <script src="featuredVideos_script.js"></script>
+</body>
+</html>
