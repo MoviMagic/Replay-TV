@@ -60,7 +60,7 @@ async function loadUsers() {
         <td>${data.username}</td>
         <td>${data.email}</td>
         <td>${data.password}</td>
-        <td>${new Date(data.expirationDate).toLocaleDateString()}</td>
+        <td>${data.expirationDate.toDate().toLocaleDateString()}</td>
         <td>
           <button onclick="renewUser('${doc.id}', 1)">+1 Mes</button>
           <button onclick="renewUser('${doc.id}', 3)">+3 Meses</button>
@@ -83,11 +83,15 @@ document.getElementById("add-user-form").addEventListener("submit", async (e) =>
 
   try {
     const newUser = await auth.createUserWithEmailAndPassword(email, password);
+
+    // Convertir expirationDate a Timestamp
+    const expirationTimestamp = firebase.firestore.Timestamp.fromDate(new Date(expirationDate));
+
     await db.collection("users").doc(newUser.user.uid).set({
       username,
       email,
       password,
-      expirationDate: new Date(expirationDate).toISOString(),
+      expirationDate: expirationTimestamp, // Guardar como Timestamp
     });
     loadUsers();
   } catch (error) {
@@ -99,10 +103,22 @@ document.getElementById("add-user-form").addEventListener("submit", async (e) =>
 async function renewUser(userId, months) {
   const userRef = db.collection("users").doc(userId);
   const userDoc = await userRef.get();
+
   if (userDoc.exists) {
-    const expirationDate = new Date(userDoc.data().expirationDate);
-    expirationDate.setMonth(expirationDate.getMonth() + months);
-    await userRef.update({ expirationDate: expirationDate.toISOString() });
+    const currentDate = new Date(); // Fecha actual
+    const expirationDate = userDoc.data().expirationDate.toDate(); // Fecha de expiración actual
+
+    // Calcular la fecha base para la renovación
+    const baseDate = expirationDate > currentDate ? expirationDate : currentDate;
+
+    // Añadir los meses de renovación
+    baseDate.setMonth(baseDate.getMonth() + months);
+
+    // Convertir a Timestamp y actualizar en Firestore
+    const newExpirationTimestamp = firebase.firestore.Timestamp.fromDate(baseDate);
+    await userRef.update({ expirationDate: newExpirationTimestamp });
+
+    // Recargar la lista de usuarios
     loadUsers();
   }
 }
