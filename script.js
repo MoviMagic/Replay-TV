@@ -1,6 +1,25 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, doc, getDocs, collection, query, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  onAuthStateChanged, 
+  signOut, 
+  createUserWithEmailAndPassword, 
+  updatePassword, 
+  deleteUser 
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDocs, 
+  collection, 
+  query, 
+  where, 
+  updateDoc, 
+  getDoc, 
+  deleteDoc 
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDnGHxXiUkm1Onblu3en-V2v5Yxk9OnFL8",
@@ -15,29 +34,39 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Verificar si el usuario es administrador
+async function isAdmin(uid) {
+  try {
+    const adminDoc = await getDoc(doc(db, 'adminUsers', uid));
+    return adminDoc.exists() && adminDoc.data().role === 'admin';
+  } catch (error) {
+    console.error("Error al verificar si el usuario es administrador:", error);
+    return false;
+  }
+}
+
+// Mostrar mensajes debajo del botón "Agregar Usuario"
+function showMessage(message, color) {
+  const messageElement = document.getElementById('message');
+  messageElement.innerText = message;
+  messageElement.style.color = color;
+  messageElement.style.marginTop = "10px";
+}
+
 // Manejo de la autenticación
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    document.getElementById('login-modal').style.display = 'none';
-    document.getElementById('admin-panel').style.display = 'block';
-    document.getElementById('admin-email-display').innerText = `Administrador: ${user.email}`;
-    listarUsuarios();
+    const isUserAdmin = await isAdmin(user.uid);
+
+    if (isUserAdmin) {
+      document.getElementById('login-modal').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      document.getElementById('admin-email-display').innerText = `Administrador: ${user.email}`;
+      listarUsuarios(user.uid);
+    }
   } else {
     document.getElementById('login-modal').style.display = 'flex';
     document.getElementById('admin-panel').style.display = 'none';
-  }
-});
-
-// Inicio de sesión del administrador
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('admin-email').value;
-  const password = document.getElementById('admin-password').value;
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    alert("Error: " + error.message);
   }
 });
 
@@ -49,33 +78,109 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value;
   const expirationDate = new Date(document.getElementById('expirationDate').value);
 
-  // Generar un UID para el nuevo usuario
-  const userUID = crypto.randomUUID();
+  const adminUID = auth.currentUser.uid;
 
   try {
+    // Verificar si el usuario ya existe
+    const userQuery = query(collection(db, 'users'), where("email", "==", email));
+    const querySnapshot = await getDocs(userQuery);
+
+    if (!querySnapshot.empty) {
+      showMessage("Usuario ya existe", "yellow");
+      return;
+    }
+
+    // Crear usuario en Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userUID = userCredential.user.uid;
+
+    // Guardar datos en Firestore
     await setDoc(doc(db, 'users', userUID), {
-      adminId: auth.currentUser.uid,
+      adminId: adminUID,
       username: username,
       email: email,
       password: password,
       expirationDate: expirationDate
     });
 
-    alert('Usuario creado exitosamente.');
-    listarUsuarios();
+    showMessage("Usuario creado exitosamente", "green");
+    listarUsuarios(adminUID);
     document.getElementById('user-form').reset();
   } catch (error) {
-    alert("Error al crear usuario: " + error.message);
+    console.error("Error al crear usuario:", error);
+    showMessage("Error al crear usuario: " + error.message, "red");
   }
 });
 
-// Listar usuarios
-async function listarUsuarios(filter = "") {
-  const usersContainer = document.getElementById('users-list');
-  usersContainer.innerHTML = ''; // Limpiar contenido previo
+// Editar un usuario
+window.editarUsuario = async function (userId) {
+  const newUsername = prompt("Ingrese el nuevo nombre de usuario:");
+  const newPassword = prompt("Ingrese la nueva contraseña:");
+
+  if (!newUsername || !newPassword) {
+    alert("Los campos no pueden estar vacíos.");
+    return;
+  }
 
   try {
-    const q = query(collection(db, 'users'), where("adminId", "==", auth.currentUser.uid));
+    // Actualizar en Firestore
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      username: newUsername,
+      password: newPassword
+    });
+
+    // Actualizar en Firebase Authentication
+    const userCredential = await getDoc(userRef);
+    if (userCredential.exists()) {
+      const userAuth = auth.currentUser;
+      if (userAuth.uid === userId) {
+        await updatePassword(userAuth, newPassword);
+      }
+    }
+
+    alert("Usuario actualizado correctamente.");
+    listarUsuarios(auth.currentUser.uid);
+  } catch (error) {
+    console.error("Error al editar usuario:", error);
+    alert("Error al editar usuario: " + error.message);
+  }
+};
+
+// Eliminar un usuario
+window.eliminarUsuario = async function (userId) {
+  const confirmDelete = confirm("¿Estás seguro de que deseas eliminar este usuario?");
+
+  if (!confirmDelete) return;
+
+  try {
+    // Eliminar de Firebase Authentication
+    const userCredential = await getDoc(doc(db, 'users', userId));
+    if (userCredential.exists()) {
+      const userAuth = auth.currentUser;
+      if (userAuth.uid === userId) {
+        await deleteUser(userAuth);
+      }
+    }
+
+    // Eliminar de Firestore
+    await deleteDoc(doc(db, 'users', userId));
+
+    alert("Usuario eliminado correctamente.");
+    listarUsuarios(auth.currentUser.uid);
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    alert("Error al eliminar usuario: " + error.message);
+  }
+};
+
+// Listar usuarios
+async function listarUsuarios(adminUID) {
+  const usersContainer = document.getElementById('users-list');
+  usersContainer.innerHTML = '';
+
+  try {
+    const q = query(collection(db, 'users'), where("adminId", "==", adminUID));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
@@ -84,23 +189,16 @@ async function listarUsuarios(filter = "") {
       querySnapshot.forEach((doc) => {
         const userData = doc.data();
 
-        // Filtrar usuarios según el término de búsqueda
-        if (filter && !userData.username.toLowerCase().includes(filter.toLowerCase()) &&
-            !userData.email.toLowerCase().includes(filter.toLowerCase())) {
-          return;
-        }
-
         const userElement = document.createElement('div');
         userElement.classList.add('user-item');
         userElement.innerHTML = `
           <p><strong>Nombre:</strong> ${userData.username}</p>
           <p><strong>Email:</strong> ${userData.email}</p>
-          <p><strong>Fecha de Expiración:</strong> ${userData.expirationDate.toDate().toLocaleDateString()}</p>
+          <p><strong>Fecha de Expiración:</strong> ${new Date(userData.expirationDate).toLocaleDateString()}</p>
           <div class="user-actions">
+            <button onclick="editarUsuario('${doc.id}')">Editar Usuario</button>
+            <button onclick="eliminarUsuario('${doc.id}')">Eliminar Usuario</button>
             <button onclick="renovarUsuario('${doc.id}', 1)">Renovar 1 mes</button>
-            <button onclick="renovarUsuario('${doc.id}', 3)">Renovar 3 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 6)">Renovar 6 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 12)">Renovar 12 meses</button>
           </div>
         `;
         usersContainer.appendChild(userElement);
@@ -111,47 +209,3 @@ async function listarUsuarios(filter = "") {
     usersContainer.innerHTML = `<p>Error al cargar usuarios: ${error.message}</p>`;
   }
 }
-
-// Renovar cuenta de usuario
-window.renovarUsuario = async function (userId, months) {
-  try {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      let expirationDate = userData.expirationDate.toDate();
-      const now = new Date();
-
-      if (expirationDate < now) {
-        expirationDate = now;
-      }
-
-      expirationDate.setMonth(expirationDate.getMonth() + months);
-
-      await updateDoc(userRef, { expirationDate: expirationDate });
-      alert(`Usuario renovado por ${months} mes(es).`);
-      listarUsuarios();
-    }
-  } catch (error) {
-    console.error("Error al renovar usuario:", error);
-    alert("Error al renovar usuario: " + error.message);
-  }
-};
-
-// Filtrar usuarios
-document.getElementById('search-bar').addEventListener('input', (e) => {
-  const filter = e.target.value;
-  listarUsuarios(filter);
-});
-
-// Cerrar sesión
-document.getElementById('logout-btn').addEventListener('click', async () => {
-  await signOut(auth);
-  location.reload();
-});
-
-// Redirigir al generador de contenidos
-document.getElementById('content-btn').addEventListener('click', () => {
-  window.location.href = "https://movimagic.github.io/generador_contenidos/";
-});
