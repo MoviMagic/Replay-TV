@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Películas - Dashboard</title>
+  <link rel="stylesheet" href="styles_movies.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="dashboard">
+    <header class="header">
+      <h1>Generador de Películas</h1>
+    </header>
+    <main class="content">
+      <section class="form-section">
+        <h2>Formulario de Película</h2>
+        <form id="movie-form">
+          <input type="text" id="documentId" placeholder="ID de Documento (1184918-the-wild-robot)">
+          <input type="text" id="title" placeholder="Título de la Película" required>
+          <input type="text" id="tmdbId" placeholder="ID de TMDB (ejemplo: solo el numero 1184918)" required>
+          <input type="text" id="videoUrl" placeholder="URL del Video" required>
+
+          <label for="categories">Categorías (selecciona una o más):</label>
+          <select id="categories" multiple required>
+            <option value="Películas">Estrenos</option>
+            <option value="Infantil">Sagas</option>
+            <option value="Netflix">Infantiles</option>
+            <option value="Prime Video">Clásicas</option>
+            <option value="Disney+">Generales</option>
+          </select>
+
+          <label for="addedDate">Fecha de Adición:</label>
+          <input type="date" id="addedDate" required>
+          <button type="submit">Agregar Película</button>
+        </form>
+      </section>
+
+      <section class="actions-section">
+        <h2>Acciones</h2>
+        <button type="button" id="verify-movie-btn">Verificar Película</button>
+        <button type="button" id="refresh-page-btn">Actualizar Página</button>
+        <p id="message"></p>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="script_movies.js"></script>
+</body>
+</html>

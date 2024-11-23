@@ -1,0 +1,160 @@
+/* Estilos Generales */
+body {
+  margin: 0;
+  font-family: 'Roboto', Arial, sans-serif;
+  background-color: #10182b;
+  color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Contenedor del Dashboard */
+.dashboard-container {
+  width: 100%;
+  max-width: 1200px;
+  background-color: #16233c;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Encabezado */
+header {
+  background-color: #1f80e0;
+  padding: 20px;
+  text-align: center;
+  border-bottom: 2px solid #144a73;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #ffffff;
+}
+
+/* Diseño de la cuadrícula principal */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Tarjetas */
+.card {
+  background-color: #1e2b45;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.card.wide {
+  grid-column: span 2;
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+/* Formularios */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+input, select, button {
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input::placeholder {
+  color: #a0b4c8;
+}
+
+select {
+  background-color: #162a40;
+  color: #ffffff;
+}
+
+button {
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Temporadas y episodios */
+.seasons-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Separación entre temporadas */
+}
+
+.season {
+  padding: 10px;
+  border: 1px solid #144a73; /* Bordes entre temporadas */
+  border-radius: 5px;
+  background-color: #253549;
+}
+
+.episodes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Separación entre episodios */
+  margin-top: 10px; /* Espacio entre el botón y los episodios */
+}
+
+.episodes-container input {
+  background-color: #162a40;
+  color: white;
+  border: 1px solid #144a73;
+}
+
+/* Botones */
+.primary-btn {
+  background-color: #1f80e0;
+  color: white;
+}
+
+.primary-btn:hover {
+  background-color: #144a73;
+}
+
+.secondary-btn {
+  background-color: #384a5e;
+  color: white;
+}
+
+.secondary-btn:hover {
+  background-color: #2a3b4d;
+}
+
+.danger-btn {
+  background-color: #e63946;
+  color: white;
+}
+
+.danger-btn:hover {
+  background-color: #b22234;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

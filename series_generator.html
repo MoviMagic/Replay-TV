@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Profesional de Series</title>
+  <link rel="stylesheet" href="styles_series.css">
+  <script type="module" src="series_script.js"></script>
+</head>
+
+<body>
+  <div class="dashboard-container">
+    <header>
+      <h1>Dashboard de Series</h1>
+    </header>
+    <main class="dashboard-grid">
+      <section class="card wide">
+        <h2>Agregar Serie</h2>
+        <form id="series-form">
+          <div class="form-row">
+            <input type="text" id="documentId" placeholder="ID del documento, solo numero '1416'" required>
+            <button type="button" id="verify-series-btn">Verificar</button>
+          </div>
+          <div class="form-row">
+            <input type="text" id="name" placeholder="Nombre de la serie" required>
+            <input type="text" id="tmdbid" placeholder="TMDB ID, solo numero '1416'" required>
+          </div>
+          <div class="form-row">
+            <select id="category" required>
+              <option value="">Seleccione una categoría</option>
+              <option value="Series">Retro Clásicas</option>
+              <option value="Netflix">Retro Animes</option>
+              <option value="Prime Video">Animes</option>
+              <option value="Disney+">Kids</option>
+              <option value="Max">Generales</option>
+            </select>
+            <input type="date" id="addedDate" required>
+          </div>
+          <h3>Temporadas</h3>
+          <div id="seasons-container" class="seasons-section">
+            <div class="season">
+              <label>Temporada 1</label>
+              <div id="episodes-container-1" class="episodes-container">
+                <input type="text" placeholder="URL del episodio 1" class="episode-url">
+              </div>
+              <button type="button" onclick="addEpisode(1)">Agregar Episodio</button>
+            </div>
+          </div>
+          <button type="button" onclick="addSeason()" class="secondary-btn">Agregar Temporada</button>
+          <button type="submit" class="primary-btn">Agregar Serie</button>
+        </form>
+      </section>
+      <section class="card">
+        <h2>Eliminar Serie</h2>
+        <form id="delete-series-form">
+          <div class="form-row">
+            <input type="text" id="delete-documentId" placeholder="ID del documento" required>
+            <button type="submit" class="danger-btn">Eliminar Serie</button>
+          </div>
+        </form>
+      </section>
+      <section class="card actions">
+        <button onclick="location.reload()" class="primary-btn">Actualizar Página</button>
+        <button onclick="window.history.back()" class="secondary-btn">Volver Atrás</button>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html>
