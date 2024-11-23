@@ -3,19 +3,12 @@ import {
   getAuth, 
   signInWithEmailAndPassword, 
   onAuthStateChanged, 
-  signOut, 
-  createUserWithEmailAndPassword 
+  signOut 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { 
   getFirestore, 
   doc, 
-  getDocs, 
-  collection, 
-  query, 
-  updateDoc, 
-  getDoc, 
-  setDoc, 
-  deleteDoc 
+  getDoc 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 // Configuración de Firebase
@@ -33,9 +26,10 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Temporizador de inactividad
 let inactivityTimer;
 
-// Función para reiniciar el temporizador de inactividad
+// Reiniciar temporizador de inactividad
 function resetInactivityTimer() {
   clearTimeout(inactivityTimer);
   inactivityTimer = setTimeout(() => {
@@ -44,19 +38,27 @@ function resetInactivityTimer() {
   }, 15 * 60 * 1000); // 15 minutos
 }
 
-// Escuchar eventos de interacción del usuario para reiniciar el temporizador
+// Escuchar eventos de interacción del usuario
 ["click", "mousemove", "keypress"].forEach((event) => {
   document.addEventListener(event, resetInactivityTimer);
 });
 
-// Cerrar sesión del administrador
+// Función para cerrar sesión con confirmación
 async function cerrarSesion() {
-  await signOut(auth);
-  localStorage.removeItem("isLoggedIn");
-  location.reload();
+  const confirmLogout = confirm("¿Estás seguro de que deseas cerrar sesión?");
+  if (confirmLogout) {
+    try {
+      await signOut(auth); // Cerrar sesión en Firebase
+      localStorage.removeItem("isLoggedIn"); // Eliminar estado de sesión local
+      location.reload(); // Recargar la página
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      alert("Error al cerrar sesión: " + error.message);
+    }
+  }
 }
 
-// Verificar el estado de autenticación al cargar la página
+// Verificar autenticación al cargar la página
 onAuthStateChanged(auth, async (user) => {
   const isLoggedIn = localStorage.getItem("isLoggedIn");
   if (user && isLoggedIn) {
@@ -67,7 +69,6 @@ onAuthStateChanged(auth, async (user) => {
       document.getElementById("login-modal").style.display = "none";
       document.getElementById("admin-panel").style.display = "block";
       document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
-      listarUsuarios();
       resetInactivityTimer(); // Reiniciar temporizador de inactividad
     } else {
       alert("No tienes permisos para acceder al panel.");
@@ -94,121 +95,5 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   }
 });
 
-// Manejar el formulario de creación de usuarios
-document.getElementById("user-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const username = document.getElementById("username").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const expirationDateInput = document.getElementById("expirationDate").value;
-
-  if (!username || !email || !password || !expirationDateInput) {
-    alert("Por favor, completa todos los campos.");
-    return;
-  }
-
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    const expirationDate = new Date(expirationDateInput);
-
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
-      username: username,
-      email: email,
-      password: password,
-      expirationDate: expirationDate,
-    });
-
-    alert("Usuario creado exitosamente.");
-    location.reload(); // Recargar la página
-  } catch (error) {
-    console.error("Error al crear usuario:", error);
-    alert("Error al crear usuario: " + error.message);
-  }
-});
-
-// Función para listar todos los usuarios
-async function listarUsuarios(filter = "") {
-  const usersContainer = document.getElementById("users-list");
-  usersContainer.innerHTML = "";
-
-  try {
-    const q = query(collection(db, "users"));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      usersContainer.innerHTML = "<p>No hay usuarios creados.</p>";
-    } else {
-      querySnapshot.forEach((doc) => {
-        const userData = doc.data();
-        if (filter && !userData.username.toLowerCase().includes(filter.toLowerCase()) &&
-            !userData.email.toLowerCase().includes(filter.toLowerCase())) {
-          return;
-        }
-        const userElement = document.createElement("div");
-        userElement.classList.add("user-item");
-        userElement.innerHTML = `
-          <p><strong>Nombre:</strong> ${userData.username}</p>
-          <p><strong>Email:</strong> ${userData.email}</p>
-          <p><strong>Contraseña:</strong> ${userData.password || "No disponible"}</p>
-          <p><strong>Fecha de Expiración:</strong> ${userData.expirationDate.toDate().toLocaleDateString()}</p>
-          <div class="user-actions">
-            <button onclick="renovarUsuario('${doc.id}', 1)">Renovar 1 mes</button>
-            <button onclick="renovarUsuario('${doc.id}', 3)">Renovar 3 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 6)">Renovar 6 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 12)">Renovar 12 meses</button>
-          </div>
-          <button class="delete-button" onclick="eliminarUsuario('${doc.id}')">Eliminar Usuario</button>
-        `;
-        usersContainer.appendChild(userElement);
-      });
-    }
-  } catch (error) {
-    console.error("Error al listar usuarios:", error);
-    usersContainer.innerHTML = `<p>Error al cargar usuarios: ${error.message}</p>`;
-  }
-}
-
-// Función para renovar la cuenta del usuario
-window.renovarUsuario = async function (userId, months) {
-  try {
-    const userRef = doc(db, "users", userId);
-    const userDoc = await getDoc(userRef);
-
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      let expirationDate = userData.expirationDate.toDate();
-      const now = new Date();
-
-      if (expirationDate < now) {
-        expirationDate = now;
-      }
-
-      expirationDate.setMonth(expirationDate.getMonth() + months);
-
-      await updateDoc(userRef, { expirationDate: expirationDate });
-      alert(`Usuario renovado exitosamente por ${months} mes(es).`);
-      location.reload(); // Recargar la página
-    }
-  } catch (error) {
-    console.error("Error al renovar usuario:", error);
-    alert("Error al renovar usuario: " + error.message);
-  }
-};
-
-// Función para eliminar un usuario
-window.eliminarUsuario = async function (userId) {
-  try {
-    const userRef = doc(db, "users", userId);
-    await deleteDoc(userRef);
-
-    alert("Usuario eliminado exitosamente.");
-    location.reload(); // Recargar la página
-  } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    alert("Error al eliminar usuario: " + error.message);
-  }
-};
+// Vincular el botón de cerrar sesión
+document.getElementById("logout-btn").addEventListener("click", cerrarSesion);
