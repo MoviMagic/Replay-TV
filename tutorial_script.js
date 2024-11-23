@@ -14,7 +14,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Verificar si el usuario autenticado es administrador
+// Función para verificar si el usuario autenticado es administrador
 async function isAdmin(user) {
   try {
     const userDoc = await db.collection("adminUsers").doc(user.uid).get();
@@ -39,7 +39,7 @@ tutorialForm.addEventListener("submit", async (e) => {
       return;
     }
 
-    // Validar si el usuario es administrador
+    // Verificar si el usuario es administrador
     const isUserAdmin = await isAdmin(user);
     if (!isUserAdmin) {
       alert("No tienes permisos para agregar tutoriales.");
@@ -48,7 +48,7 @@ tutorialForm.addEventListener("submit", async (e) => {
 
     // Obtener los valores del formulario
     const name = document.getElementById("name").value.trim();
-    const addedDate = document.getElementById("addedDate").value;
+    const addedDate = document.getElementById("addedDate").value.trim();
     const duration = document.getElementById("duration").value.trim();
     const posterUrl = document.getElementById("posterUrl").value.trim();
     const videoUrl = document.getElementById("videoUrl").value.trim();
@@ -62,15 +62,19 @@ tutorialForm.addEventListener("submit", async (e) => {
     // Convertir la fecha a Timestamp
     const timestamp = firebase.firestore.Timestamp.fromDate(new Date(addedDate));
 
-    // Agregar documento a la colección "cursos"
-    await db.collection("cursos").doc(name).set({
-      addedDate: timestamp,
-      duration: duration,
-      name: name,
-      posterUrl: posterUrl,
-      videoUrl: videoUrl,
-    });
+    // Agregar o actualizar documento en la colección "cursos"
+    await db.collection("cursos").doc(name).set(
+      {
+        addedDate: timestamp,
+        duration: duration,
+        name: name,
+        posterUrl: posterUrl,
+        videoUrl: videoUrl,
+      },
+      { merge: true } // Actualiza si el documento ya existe
+    );
 
+    // Mostrar mensaje de éxito
     alert("Curso agregado con éxito.");
     tutorialForm.reset(); // Limpiar el formulario
   } catch (error) {
