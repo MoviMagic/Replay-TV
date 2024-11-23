@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, doc, getDocs, collection, query, where, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDocs, collection, query, where, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 // Configuración de Firebase para Replay TV
 const firebaseConfig = {
@@ -17,20 +17,20 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Verificar el estado de autenticación al cargar la página
+// Verificar el estado de autenticación
 onAuthStateChanged(auth, (user) => {
   if (user) {
     document.getElementById('login-modal').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('admin-email-display').innerText = `Administrador: ${user.email}`;
-    listarUsuarios(); // Llamar a listarUsuarios al autenticarse o recargar
+    listarUsuarios(); // Mostrar usuarios al iniciar sesión
   } else {
     document.getElementById('login-modal').style.display = 'flex';
     document.getElementById('admin-panel').style.display = 'none';
   }
 });
 
-// Manejar el formulario de inicio de sesión
+// Manejo del formulario de inicio de sesión
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('admin-email').value;
@@ -43,7 +43,37 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   }
 });
 
-// Función para listar los usuarios creados
+// Crear un usuario nuevo
+document.getElementById('user-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value;
+  const email = document.getElementById('email').value;
+  const expirationDate = new Date(document.getElementById('expirationDate').value);
+
+  if (!auth.currentUser) {
+    alert("Debes iniciar sesión como administrador para crear usuarios.");
+    return;
+  }
+
+  try {
+    const userRef = doc(collection(db, 'users')); // Crear un nuevo documento en la colección "users"
+    await setDoc(userRef, {
+      username,
+      email,
+      expirationDate: expirationDate, // Guardar como una fecha de Firestore
+      adminId: auth.currentUser.uid // Vincular al administrador actual
+    });
+
+    alert("Usuario creado exitosamente.");
+    document.getElementById('user-form').reset(); // Limpiar el formulario
+    listarUsuarios(); // Actualizar la lista de usuarios
+  } catch (error) {
+    console.error("Error al crear usuario:", error);
+    alert("Error al crear usuario: " + error.message);
+  }
+});
+
+// Listar usuarios
 async function listarUsuarios(filter = "") {
   const usersContainer = document.getElementById('users-list');
   usersContainer.innerHTML = ''; // Limpiar contenido previo
@@ -68,12 +98,6 @@ async function listarUsuarios(filter = "") {
           <p><strong>Nombre:</strong> ${userData.username}</p>
           <p><strong>Email:</strong> ${userData.email}</p>
           <p><strong>Fecha de Expiración:</strong> ${userData.expirationDate.toDate().toLocaleDateString()}</p>
-          <div class="user-actions">
-            <button onclick="renovarUsuario('${doc.id}', 1)">Renovar 1 mes</button>
-            <button onclick="renovarUsuario('${doc.id}', 3)">Renovar 3 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 6)">Renovar 6 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 12)">Renovar 12 meses</button>
-          </div>
         `;
         usersContainer.appendChild(userElement);
       });
@@ -84,36 +108,7 @@ async function listarUsuarios(filter = "") {
   }
 }
 
-// Función para renovar la cuenta del usuario desde la fecha adecuada (fecha actual o fecha de vencimiento)
-window.renovarUsuario = async function (userId, months) {
-  try {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      let expirationDate = userData.expirationDate.toDate(); // Fecha de vencimiento actual del usuario
-      const now = new Date(); // Fecha actual
-
-      // Comprobar si el usuario está vencido o no
-      if (expirationDate < now) {
-        expirationDate = now; // Si está vencido, iniciar renovación desde hoy
-      }
-      
-      // Sumar los meses a la fecha de inicio de la renovación (fecha actual o fecha de vencimiento)
-      expirationDate.setMonth(expirationDate.getMonth() + months);
-
-      await updateDoc(userRef, { expirationDate: expirationDate });
-      alert(`Usuario renovado exitosamente por ${months} mes(es).`);
-      listarUsuarios(); // Actualizar la lista de usuarios
-    }
-  } catch (error) {
-    console.error("Error al renovar usuario:", error);
-    alert("Error al renovar usuario: " + error.message);
-  }
-};
-
-// Filtrar usuarios al escribir en el campo de búsqueda
+// Filtrar usuarios por búsqueda
 document.getElementById('search-bar').addEventListener('input', (e) => {
   const filter = e.target.value;
   listarUsuarios(filter);
@@ -122,11 +117,10 @@ document.getElementById('search-bar').addEventListener('input', (e) => {
 // Cerrar sesión del administrador
 document.getElementById('logout-btn').addEventListener('click', async () => {
   await signOut(auth);
-  localStorage.removeItem("isLoggedIn");
   location.reload();
 });
 
-// Redirigir al enlace de contenidos al hacer clic en el botón
+// Redirigir al enlace de contenidos
 document.getElementById('content-btn').addEventListener('click', () => {
-  window.location.href = "https://movimagic.github.io/generador_contenidos/";
+  window.location.href = "https://replay-tv.github.io/generador_contenidos/";
 });
