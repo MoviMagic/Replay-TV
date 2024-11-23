@@ -131,7 +131,7 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     });
 
     alert("Usuario creado exitosamente.");
-    location.reload(); // Recargar la página
+    listarUsuarios(); // Actualizar la lista sin recargar la página
   } catch (error) {
     console.error("Error al crear usuario:", error);
     alert("Error al crear usuario: " + error.message);
@@ -199,7 +199,7 @@ window.renovarUsuario = async function (userId, months) {
 
       await updateDoc(userRef, { expirationDate: expirationDate });
       alert(`Usuario renovado exitosamente por ${months} mes(es).`);
-      location.reload(); // Recargar la página
+      listarUsuarios(); // Actualizar lista sin recargar la página
     }
   } catch (error) {
     console.error("Error al renovar usuario:", error);
@@ -214,12 +214,12 @@ window.eliminarUsuario = async function (userId) {
     await deleteDoc(userRef);
 
     alert("Usuario eliminado exitosamente.");
-    location.reload(); // Recargar la página
+    listarUsuarios(); // Actualizar lista sin recargar la página
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     alert("Error al eliminar usuario: " + error.message);
   }
-});
+}
 
 // Vincular el botón de cerrar sesión
 document.getElementById("logout-btn").addEventListener("click", cerrarSesion);
