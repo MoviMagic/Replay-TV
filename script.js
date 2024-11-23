@@ -36,14 +36,22 @@ const db = getFirestore(app);
 // Verificar el estado de autenticación al cargar la página
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    const isAdmin = await verificarAdmin(user.uid);
-    if (isAdmin) {
-      document.getElementById("login-modal").style.display = "none";
-      document.getElementById("admin-panel").style.display = "block";
-      document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
-      listarUsuarios(); // Mostrar todos los usuarios al autenticarse
-    } else {
-      alert("Acceso denegado. Solo el administrador puede acceder al panel.");
+    console.log("Usuario autenticado con UID:", user.uid);
+    try {
+      const isAdmin = await verificarAdmin(user.uid);
+      if (isAdmin) {
+        document.getElementById("login-modal").style.display = "none";
+        document.getElementById("admin-panel").style.display = "block";
+        document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
+        listarUsuarios();
+      } else {
+        alert("Acceso denegado. Solo el administrador puede acceder al panel.");
+        await signOut(auth);
+        location.reload();
+      }
+    } catch (error) {
+      console.error("Error verificando administrador:", error);
+      alert("Error en el sistema. Por favor, intenta nuevamente.");
       await signOut(auth);
       location.reload();
     }
@@ -56,8 +64,15 @@ onAuthStateChanged(auth, async (user) => {
 // Verificar si el usuario es administrador
 async function verificarAdmin(uid) {
   try {
-    const adminDoc = await getDoc(doc(db, "adminusers", uid));
-    return adminDoc.exists() && adminDoc.data().role === "admin";
+    const adminDoc = await getDoc(doc(db, "adminUsers", uid));
+    if (adminDoc.exists()) {
+      const role = adminDoc.data().role;
+      console.log("Rol encontrado:", role);
+      return role === "admin";
+    } else {
+      console.error("El documento del administrador no existe.");
+      return false;
+    }
   } catch (error) {
     console.error("Error al verificar administrador:", error);
     return false;
@@ -91,22 +106,20 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
   }
 
   try {
-    // Crear usuario en Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
 
-    // Guardar usuario en Firestore Database
     await setDoc(doc(db, "users", uid), {
       username,
       email,
-      password, // Agregar el password al documento
-      expirationDate: expirationDate, // Guardar como una fecha en Firestore
-      adminId: auth.currentUser.uid // Asociar con el administrador actual
+      password,
+      expirationDate: expirationDate,
+      adminId: auth.currentUser.uid
     });
 
     alert("Usuario creado exitosamente.");
-    document.getElementById("user-form").reset(); // Limpiar el formulario
-    listarUsuarios(); // Actualizar la lista de usuarios
+    document.getElementById("user-form").reset();
+    listarUsuarios();
   } catch (error) {
     console.error("Error al crear usuario:", error);
     alert("Error al crear usuario: " + error.message);
@@ -116,10 +129,9 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
 // Función para listar los usuarios creados
 async function listarUsuarios(filter = "") {
   const usersContainer = document.getElementById("users-list");
-  usersContainer.innerHTML = ""; // Limpiar contenido previo
+  usersContainer.innerHTML = "";
 
   try {
-    // Obtener todos los documentos de la colección "users"
     const querySnapshot = await getDocs(collection(db, "users"));
 
     if (querySnapshot.empty) {
@@ -127,9 +139,8 @@ async function listarUsuarios(filter = "") {
     } else {
       querySnapshot.forEach((doc) => {
         const userData = doc.data();
-        const userId = doc.id; // UID del usuario
+        const userId = doc.id;
 
-        // Filtrar usuarios si el nombre o email no coincide con el filtro
         if (
           filter &&
           !userData.username.toLowerCase().includes(filter.toLowerCase()) &&
@@ -138,7 +149,6 @@ async function listarUsuarios(filter = "") {
           return;
         }
 
-        // Crear el elemento de usuario en la lista
         const userElement = document.createElement("div");
         userElement.classList.add("user-item");
         userElement.innerHTML = `
@@ -172,20 +182,18 @@ window.renovarUsuario = async function (userId, months) {
 
     if (userDoc.exists()) {
       const userData = userDoc.data();
-      let expirationDate = userData.expirationDate.toDate(); // Fecha de vencimiento actual del usuario
-      const now = new Date(); // Fecha actual
+      let expirationDate = userData.expirationDate.toDate();
+      const now = new Date();
 
-      // Comprobar si el usuario está vencido o no
       if (expirationDate < now) {
-        expirationDate = now; // Si está vencido, iniciar renovación desde hoy
+        expirationDate = now;
       }
 
-      // Sumar los meses a la fecha de inicio de la renovación
       expirationDate.setMonth(expirationDate.getMonth() + months);
 
       await updateDoc(userRef, { expirationDate: expirationDate });
       alert(`Usuario renovado exitosamente por ${months} mes(es).`);
-      listarUsuarios(); // Actualizar la lista de usuarios
+      listarUsuarios();
     }
   } catch (error) {
     console.error("Error al renovar usuario:", error);
@@ -196,21 +204,13 @@ window.renovarUsuario = async function (userId, months) {
 // Función para eliminar usuario
 window.eliminarUsuario = async function (userId) {
   try {
-    const currentUser = auth.currentUser;
-
-    // Prevenir eliminar al administrador actual
-    if (currentUser.uid === userId) {
+    if (auth.currentUser.uid === userId) {
       throw new Error("No puedes eliminar tu propia cuenta.");
     }
 
-    // Eliminar de Firestore Database
     await deleteDoc(doc(db, "users", userId));
-
-    // Eliminar usuario de Firebase Authentication
-    await deleteUser(auth.currentUser);
-
-    alert("Usuario eliminado exitosamente de ambos sistemas.");
-    listarUsuarios(); // Actualizar la lista de usuarios
+    alert("Usuario eliminado exitosamente de Firestore.");
+    listarUsuarios();
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     alert("Error al eliminar usuario: " + error.message);
