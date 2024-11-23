@@ -1,6 +1,24 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, doc, getDocs, collection, query, where, updateDoc, getDoc, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  onAuthStateChanged, 
+  signOut, 
+  createUserWithEmailAndPassword, 
+  deleteUser 
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  getDocs, 
+  collection, 
+  query, 
+  where, 
+  updateDoc, 
+  getDoc, 
+  addDoc, 
+  deleteDoc 
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -59,14 +77,17 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
   }
 
   try {
+    // Registrar al usuario en Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
     // Convertir la fecha de expiración a formato Timestamp de Firestore
     const expirationDate = new Date(expirationDateInput);
 
-    // Referencia a la colección 'users' en Firestore
+    // Guardar los datos del usuario en Firestore
     const usersCollection = collection(db, 'users');
-
-    // Crear un nuevo documento en Firestore
     await addDoc(usersCollection, {
+      uid: user.uid, // Guardar el UID del usuario autenticado
       username: username,
       email: email,
       password: password,
@@ -153,12 +174,35 @@ window.renovarUsuario = async function (userId, months) {
   }
 };
 
-// Función para eliminar un usuario de Firestore
+// Función para eliminar un usuario de Firestore y Authentication
 window.eliminarUsuario = async function (userId) {
   try {
+    // Obtener referencia al usuario en Firestore
     const userRef = doc(db, 'users', userId);
-    await deleteDoc(userRef);
-    alert("Usuario eliminado exitosamente.");
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+
+      // Eliminar usuario de Firestore
+      await deleteDoc(userRef);
+      console.log("Usuario eliminado de Firestore.");
+
+      // Eliminar usuario de Firebase Authentication (si tiene UID asociado)
+      if (userData.uid) {
+        const userToDelete = auth.currentUser;
+        if (userToDelete) {
+          await deleteUser(userToDelete);
+          console.log("Usuario eliminado de Firebase Authentication.");
+        }
+      }
+
+      alert("Usuario eliminado exitosamente de Firestore y Authentication.");
+    } else {
+      console.error("El usuario no existe en Firestore.");
+      alert("El usuario no se encontró en Firestore.");
+    }
+
     listarUsuarios(); // Actualizar la lista de usuarios
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
