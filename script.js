@@ -13,8 +13,6 @@ import {
   setDoc,
   getDocs,
   collection,
-  query,
-  where,
   updateDoc,
   getDoc,
   deleteDoc
@@ -41,7 +39,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById("login-modal").style.display = "none";
     document.getElementById("admin-panel").style.display = "block";
     document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
-    listarUsuarios(); // Llamar a listarUsuarios al autenticarse o recargar
+    listarUsuarios(); // Mostrar todos los usuarios al autenticarse
   } else {
     document.getElementById("login-modal").style.display = "flex";
     document.getElementById("admin-panel").style.display = "none";
@@ -84,7 +82,7 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
       username,
       email,
       expirationDate: expirationDate, // Guardar como una fecha en Firestore
-      adminId: auth.currentUser.uid // Vincular al administrador actual
+      adminId: "Sm4NkYQ5GGd5fwd1Q7tHASiBZC52" // Fijar el adminId del administrador
     });
 
     alert("Usuario creado exitosamente.");
@@ -102,14 +100,16 @@ async function listarUsuarios(filter = "") {
   usersContainer.innerHTML = ""; // Limpiar contenido previo
 
   try {
-    const q = query(collection(db, "users"), where("adminId", "==", auth.currentUser.uid));
-    const querySnapshot = await getDocs(q);
+    // Obtener todos los documentos de la colección "users"
+    const querySnapshot = await getDocs(collection(db, "users"));
 
     if (querySnapshot.empty) {
       usersContainer.innerHTML = "<p>No hay usuarios creados.</p>";
     } else {
       querySnapshot.forEach((doc) => {
         const userData = doc.data();
+        const userId = doc.id; // UID del usuario
+
         // Filtrar usuarios si el nombre o email no coincide con el filtro
         if (
           filter &&
@@ -118,18 +118,21 @@ async function listarUsuarios(filter = "") {
         ) {
           return;
         }
+
+        // Crear el elemento de usuario en la lista
         const userElement = document.createElement("div");
         userElement.classList.add("user-item");
         userElement.innerHTML = `
+          <p><strong>UID:</strong> ${userId}</p>
           <p><strong>Nombre:</strong> ${userData.username}</p>
           <p><strong>Email:</strong> ${userData.email}</p>
           <p><strong>Fecha de Expiración:</strong> ${userData.expirationDate.toDate().toLocaleDateString()}</p>
           <div class="user-actions">
-            <button onclick="renovarUsuario('${doc.id}', 1)">Renovar 1 mes</button>
-            <button onclick="renovarUsuario('${doc.id}', 3)">Renovar 3 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 6)">Renovar 6 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 12)">Renovar 12 meses</button>
-            <button onclick="eliminarUsuario('${doc.id}')">Eliminar Usuario</button>
+            <button onclick="renovarUsuario('${userId}', 1)">Renovar 1 mes</button>
+            <button onclick="renovarUsuario('${userId}', 3)">Renovar 3 meses</button>
+            <button onclick="renovarUsuario('${userId}', 6)">Renovar 6 meses</button>
+            <button onclick="renovarUsuario('${userId}', 12)">Renovar 12 meses</button>
+            <button onclick="eliminarUsuario('${userId}')">Eliminar Usuario</button>
           </div>
         `;
         usersContainer.appendChild(userElement);
@@ -173,9 +176,8 @@ window.renovarUsuario = async function (userId, months) {
 // Función para eliminar usuario
 window.eliminarUsuario = async function (userId) {
   try {
-    // Eliminar de Firebase Authentication
-    const userRef = doc(db, "users", userId);
-    await deleteDoc(userRef);
+    // Eliminar de Firestore Database
+    await deleteDoc(doc(db, "users", userId));
 
     // Actualizar la lista
     alert("Usuario eliminado exitosamente.");
