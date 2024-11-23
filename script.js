@@ -77,10 +77,11 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
 
-    // Guardar usuario en Firestore Database
+    // Guardar usuario en Firestore Database, incluyendo el campo "password"
     await setDoc(doc(db, "users", uid), {
       username,
       email,
+      password, // Agregar el password al documento
       expirationDate: expirationDate, // Guardar como una fecha en Firestore
       adminId: "Sm4NkYQ5GGd5fwd1Q7tHASiBZC52" // Fijar el adminId del administrador
     });
@@ -126,6 +127,7 @@ async function listarUsuarios(filter = "") {
           <p><strong>UID:</strong> ${userId}</p>
           <p><strong>Nombre:</strong> ${userData.username}</p>
           <p><strong>Email:</strong> ${userData.email}</p>
+          <p><strong>Password:</strong> ${userData.password}</p>
           <p><strong>Fecha de Expiración:</strong> ${userData.expirationDate.toDate().toLocaleDateString()}</p>
           <div class="user-actions">
             <button onclick="renovarUsuario('${userId}', 1)">Renovar 1 mes</button>
