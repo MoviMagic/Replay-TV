@@ -4,7 +4,8 @@ import {
   signInWithEmailAndPassword, 
   onAuthStateChanged, 
   signOut, 
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword, 
+  deleteUser 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { 
   getFirestore, 
@@ -207,14 +208,28 @@ window.renovarUsuario = async function (userId, months) {
   }
 };
 
-// Función para eliminar un usuario
+// Función para eliminar un usuario de Firestore y Authentication
 window.eliminarUsuario = async function (userId) {
   try {
+    // Obtener el documento en Firestore
     const userRef = doc(db, "users", userId);
-    await deleteDoc(userRef);
+    const userDoc = await getDoc(userRef);
 
-    alert("Usuario eliminado exitosamente.");
-    listarUsuarios(); // Actualizar lista sin recargar la página
+    if (userDoc.exists()) {
+      // Eliminar de Firestore
+      await deleteDoc(userRef);
+
+      // Eliminar de Authentication
+      const user = auth.currentUser;
+      if (user && user.uid === userId) {
+        await deleteUser(user);
+      }
+
+      alert("Usuario eliminado exitosamente de Firestore y Authentication.");
+      listarUsuarios(); // Actualizar la lista
+    } else {
+      alert("El usuario no existe en Firestore.");
+    }
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     alert("Error al eliminar usuario: " + error.message);
