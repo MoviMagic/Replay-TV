@@ -49,14 +49,11 @@ function resetInactivityTimer() {
   document.addEventListener(event, resetInactivityTimer);
 });
 
-// Cerrar sesión del administrador con confirmación
+// Cerrar sesión del administrador
 async function cerrarSesion() {
-  const confirmLogout = confirm("¿Estás seguro de que deseas cerrar sesión?");
-  if (confirmLogout) {
-    await signOut(auth);
-    localStorage.removeItem("isLoggedIn");
-    location.reload();
-  }
+  await signOut(auth);
+  localStorage.removeItem("isLoggedIn");
+  location.reload();
 }
 
 // Verificar el estado de autenticación al cargar la página
