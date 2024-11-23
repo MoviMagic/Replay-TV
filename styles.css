@@ -1,6 +1,6 @@
 body {
   font-family: 'Roboto', sans-serif;
-  background-color: #f4f5f7;
+  background-color: #f9f9f9;
   color: #333;
   margin: 0;
   padding: 0;
@@ -10,17 +10,16 @@ body {
   min-height: 100vh;
 }
 
-/* Encabezado */
 .top-bar {
   width: 100%;
   background-color: #4a90e2;
-  padding: 15px 20px;
+  padding: 15px 30px;
   color: #fff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .bar-content {
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -28,175 +27,88 @@ body {
 }
 
 .top-bar h1 {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: bold;
 }
 
 .admin-options {
   display: flex;
   align-items: center;
-  gap: 15px;
-}
-
-button {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.content-button {
-  background-color: #357abd;
-  color: #fff;
-}
-
-.content-button:hover {
-  background-color: #285a8d;
+  gap: 20px;
 }
 
 .logout-button {
   background-color: #e84118;
-  color: white;
+  color: #ffffff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 .logout-button:hover {
   background-color: #c23616;
 }
 
-/* Modal */
-.modal-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.login-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 30px;
-  width: 90%;
-  max-width: 400px;
-  text-align: center;
-}
-
-.login-card h2 {
-  margin-bottom: 20px;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-button[type="submit"] {
-  width: 100%;
-  background-color: #4a90e2;
-  color: white;
-}
-
-button[type="submit"]:hover {
-  background-color: #357abd;
-}
-
-/* Panel */
 .main-container {
+  max-width: 1300px;
+  padding: 20px;
   width: 100%;
-  max-width: 1200px;
-  margin: 20px auto;
 }
 
 .dashboard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
 .card {
-  background: white;
-  border-radius: 10px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
   padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .card h2 {
   color: #4a90e2;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   margin-bottom: 15px;
 }
 
-.search-bar input {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
 .user-item {
-  background-color: #eef6ff;
+  background-color: #e7f1ff;
   padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
   margin-bottom: 10px;
-  position: relative;
+  border-radius: 8px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .user-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px; /* Espaciado entre los botones */
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.user-actions button {
-  background-color: #4a90e2;
-  color: white;
-}
-
-.user-actions button:hover {
-  background-color: #357abd;
-}
-
-.delete-button {
-  background-color: #e84118;
-  color: white;
-  padding: 8px 12px;
-  border: none;
+.message-box {
+  margin-top: 15px;
+  padding: 10px;
   border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 14px;
+  color: #fff;
+  display: none;
 }
 
-.delete-button:hover {
-  background-color: #c23616;
+.message-box.success {
+  background-color: #28a745; /* Verde */
+}
+
+.message-box.error {
+  background-color: #dc3545; /* Rojo */
 }
 
 @media (max-width: 768px) {
-  .bar-content {
-    flex-direction: column;
-    align-items: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .top-bar h1 {
-    font-size: 1.5rem;
-  }
-
-  button {
-    font-size: 0.8rem;
-    padding: 8px 10px;
+  .dashboard {
+    grid-template-columns: 1fr;
   }
 }

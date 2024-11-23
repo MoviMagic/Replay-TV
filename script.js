@@ -5,7 +5,8 @@ import {
   onAuthStateChanged, 
   signOut, 
   createUserWithEmailAndPassword, 
-  deleteUser 
+  deleteUser, 
+  updatePassword 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { 
   getFirestore, 
@@ -19,7 +20,6 @@ import {
   deleteDoc 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDnGHxXiUkm1Onblu3en-V2v5Yxk9OnFL8",
   authDomain: "replay-tv-33de1.firebaseapp.com",
@@ -34,86 +34,25 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let inactivityTimer;
-
-// Función para reiniciar el temporizador de inactividad
-function resetInactivityTimer() {
-  clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(() => {
-    alert("Sesión cerrada por inactividad.");
-    cerrarSesion();
-  }, 15 * 60 * 1000); // 15 minutos
+// Mostrar mensajes
+function showMessage(message, type = "success") {
+  const messageBox = document.getElementById("message-box");
+  messageBox.textContent = message;
+  messageBox.className = `message-box ${type}`;
+  messageBox.style.display = "block";
+  setTimeout(() => (messageBox.style.display = "none"), 5000);
 }
 
-// Escuchar eventos de interacción del usuario para reiniciar el temporizador
-["click", "mousemove", "keypress"].forEach((event) => {
-  document.addEventListener(event, resetInactivityTimer);
-});
-
-// Cerrar sesión del administrador con confirmación
-async function cerrarSesion() {
-  const confirmLogout = confirm("¿Estás seguro de que deseas cerrar sesión?");
-  if (confirmLogout) {
-    try {
-      await signOut(auth); // Cerrar sesión en Firebase
-      localStorage.removeItem("isLoggedIn"); // Eliminar estado de sesión local
-      location.reload(); // Recargar la página
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-      alert("Error al cerrar sesión: " + error.message);
-    }
-  }
-}
-
-// Verificar el estado de autenticación al cargar la página
-onAuthStateChanged(auth, async (user) => {
-  const isLoggedIn = localStorage.getItem("isLoggedIn");
-  if (user && isLoggedIn) {
-    const adminRef = doc(db, "adminUsers", user.uid);
-    const adminDoc = await getDoc(adminRef);
-
-    if (adminDoc.exists() && adminDoc.data().role === "admin") {
-      document.getElementById("login-modal").style.display = "none";
-      document.getElementById("admin-panel").style.display = "block";
-      document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
-      listarUsuarios();
-      resetInactivityTimer(); // Reiniciar temporizador de inactividad
-    } else {
-      alert("No tienes permisos para acceder al panel.");
-      await cerrarSesion();
-    }
-  } else {
-    document.getElementById("login-modal").style.display = "flex";
-    document.getElementById("admin-panel").style.display = "none";
-  }
-});
-
-// Manejar el formulario de inicio de sesión
-document.getElementById("login-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.getElementById("admin-email").value.trim();
-  const password = document.getElementById("admin-password").value.trim();
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    localStorage.setItem("isLoggedIn", true); // Guardar estado de sesión
-    location.reload(); // Recargar para inicializar el panel
-  } catch (error) {
-    alert("Error en el inicio de sesión: " + error.message);
-  }
-});
-
-// Manejar el formulario de creación de usuarios
+// Manejar creación de usuarios
 document.getElementById("user-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-
   const username = document.getElementById("username").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
   const expirationDateInput = document.getElementById("expirationDate").value;
 
   if (!username || !email || !password || !expirationDateInput) {
-    alert("Por favor, completa todos los campos.");
+    showMessage("Por favor completa todos los campos.", "error");
     return;
   }
 
@@ -125,116 +64,83 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
 
     await setDoc(doc(db, "users", user.uid), {
       uid: user.uid,
-      username: username,
-      email: email,
-      password: password,
-      expirationDate: expirationDate,
+      username,
+      email,
+      password,
+      expirationDate,
     });
 
-    alert("Usuario creado exitosamente.");
-    listarUsuarios(); // Actualizar la lista sin recargar la página
+    showMessage("Usuario creado exitosamente.");
+    listarUsuarios();
   } catch (error) {
-    console.error("Error al crear usuario:", error);
-    alert("Error al crear usuario: " + error.message);
+    console.error(error);
+    showMessage("Error al crear usuario.", "error");
   }
 });
 
-// Función para listar todos los usuarios
-async function listarUsuarios(filter = "") {
+// Función para listar usuarios
+async function listarUsuarios() {
   const usersContainer = document.getElementById("users-list");
   usersContainer.innerHTML = "";
 
   try {
-    const q = query(collection(db, "users"));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      usersContainer.innerHTML = "<p>No hay usuarios creados.</p>";
-    } else {
-      querySnapshot.forEach((doc) => {
-        const userData = doc.data();
-        if (filter && !userData.username.toLowerCase().includes(filter.toLowerCase()) &&
-            !userData.email.toLowerCase().includes(filter.toLowerCase())) {
-          return;
-        }
-        const userElement = document.createElement("div");
-        userElement.classList.add("user-item");
-        userElement.innerHTML = `
-          <p><strong>Nombre:</strong> ${userData.username}</p>
-          <p><strong>Email:</strong> ${userData.email}</p>
-          <p><strong>Contraseña:</strong> ${userData.password || "No disponible"}</p>
-          <p><strong>Fecha de Expiración:</strong> ${userData.expirationDate.toDate().toLocaleDateString()}</p>
+    const querySnapshot = await getDocs(collection(db, "users"));
+    querySnapshot.forEach((doc) => {
+      const user = doc.data();
+      usersContainer.innerHTML += `
+        <div class="user-item">
+          <p><strong>Nombre:</strong> ${user.username}</p>
+          <p><strong>Email:</strong> ${user.email}</p>
+          <p><strong>Contraseña:</strong> ${user.password}</p>
+          <p><strong>Expiración:</strong> ${user.expirationDate.toDate().toLocaleDateString()}</p>
           <div class="user-actions">
-            <button onclick="renovarUsuario('${doc.id}', 1)">Renovar 1 mes</button>
-            <button onclick="renovarUsuario('${doc.id}', 3)">Renovar 3 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 6)">Renovar 6 meses</button>
-            <button onclick="renovarUsuario('${doc.id}', 12)">Renovar 12 meses</button>
+            <button onclick="editarUsuario('${doc.id}')">Editar</button>
+            <button onclick="eliminarUsuario('${doc.id}')">Eliminar</button>
           </div>
-          <button class="delete-button" onclick="eliminarUsuario('${doc.id}')">Eliminar Usuario</button>
-        `;
-        usersContainer.appendChild(userElement);
-      });
-    }
+        </div>
+      `;
+    });
   } catch (error) {
-    console.error("Error al listar usuarios:", error);
-    usersContainer.innerHTML = `<p>Error al cargar usuarios: ${error.message}</p>`;
+    console.error(error);
+    showMessage("Error al listar usuarios.", "error");
   }
 }
 
-// Función para renovar la cuenta del usuario
-window.renovarUsuario = async function (userId, months) {
+// Función para editar usuarios
+window.editarUsuario = async function (userId) {
+  const newUsername = prompt("Nuevo nombre:");
+  const newPassword = prompt("Nueva contraseña:");
+
+  if (!newUsername && !newPassword) {
+    showMessage("No se realizaron cambios.", "error");
+    return;
+  }
+
   try {
     const userRef = doc(db, "users", userId);
-    const userDoc = await getDoc(userRef);
-
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      let expirationDate = userData.expirationDate.toDate();
-      const now = new Date();
-
-      if (expirationDate < now) {
-        expirationDate = now;
-      }
-
-      expirationDate.setMonth(expirationDate.getMonth() + months);
-
-      await updateDoc(userRef, { expirationDate: expirationDate });
-      alert(`Usuario renovado exitosamente por ${months} mes(es).`);
-      listarUsuarios(); // Actualizar lista sin recargar la página
-    }
+    if (newUsername) await updateDoc(userRef, { username: newUsername });
+    if (newPassword) await updateDoc(userRef, { password: newPassword });
+    showMessage("Usuario actualizado.");
+    listarUsuarios();
   } catch (error) {
-    console.error("Error al renovar usuario:", error);
-    alert("Error al renovar usuario: " + error.message);
+    console.error(error);
+    showMessage("Error al actualizar usuario.", "error");
   }
 };
 
-// Función para eliminar un usuario de Firestore y Authentication
+// Función para eliminar usuarios
 window.eliminarUsuario = async function (userId) {
   try {
-    // Obtener el documento en Firestore
-    const userRef = doc(db, "users", userId);
-    const userDoc = await getDoc(userRef);
-
-    if (userDoc.exists()) {
-      // Eliminar de Firestore
-      await deleteDoc(userRef);
-
-      // Eliminar de Authentication
-      const user = auth.currentUser;
-      if (user && user.uid === userId) {
-        await deleteUser(user);
-      }
-
-      alert("Usuario eliminado exitosamente de Firestore y Authentication.");
-      listarUsuarios(); // Actualizar la lista
-    } else {
-      alert("El usuario no existe en Firestore.");
-    }
+    await deleteDoc(doc(db, "users", userId));
+    showMessage("Usuario eliminado.");
+    listarUsuarios();
   } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    alert("Error al eliminar usuario: " + error.message);
+    console.error(error);
+    showMessage("Error al eliminar usuario.", "error");
   }
-}
+};
 
-// Vincular el botón de cerrar sesión
-document.getElementById("logout-btn").addEventListener("click", cerrarSesion);
+// Inicializar listado al cargar
+onAuthStateChanged(auth, (user) => {
+  if (user) listarUsuarios();
+});
