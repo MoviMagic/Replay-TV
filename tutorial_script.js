@@ -26,10 +26,13 @@ courseForm.addEventListener("submit", async (e) => {
     const videoUrl = document.getElementById("videoUrl").value;
 
     try {
+        // Convertir la fecha seleccionada en un Timestamp de Firestore
+        const timestamp = addedDate ? firebase.firestore.Timestamp.fromDate(new Date(addedDate)) : null;
+
         // Agregar curso a Firestore
         await db.collection("cursos").add({
             name: name,
-            addedDate: addedDate,
+            addedDate: timestamp,
             duration: duration,
             posterUrl: posterUrl,
             videoUrl: videoUrl
