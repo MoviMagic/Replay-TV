@@ -3,12 +3,13 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDnGHxXiUkm1Onblu3en-V2v5Yxk9OnFL8",
+  authDomain: "replay-tv-33de1.firebaseapp.com",
+  projectId: "replay-tv-33de1",
+  storageBucket: "replay-tv-33de1.firebasestorage.app",
+  messagingSenderId: "19557200212",
+  appId: "1:19557200212:web:a9bb8b64cbd17be46758c1",
+  measurementId: "G-JLFC3D8V9Y"
 };
 
 // Inicializa Firebase
