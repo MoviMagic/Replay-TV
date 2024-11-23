@@ -35,13 +35,26 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Verificar el estado de autenticación al cargar la página
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    document.getElementById('login-modal').style.display = 'none';
-    document.getElementById('admin-panel').style.display = 'block';
-    document.getElementById('admin-email-display').innerText = `Administrador: ${user.email}`;
-    listarUsuarios(); // Llamar a listarUsuarios al autenticarse o recargar
+    // Verificar si el usuario está en adminUsers con rol "admin"
+    const adminRef = doc(db, 'adminUsers', user.uid);
+    const adminDoc = await getDoc(adminRef);
+
+    if (adminDoc.exists() && adminDoc.data().role === "admin") {
+      // Mostrar el panel si el usuario es administrador
+      document.getElementById('login-modal').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      document.getElementById('admin-email-display').innerText = `Administrador: ${user.email}`;
+      listarUsuarios(); // Llamar a listarUsuarios al autenticarse
+    } else {
+      // Redirigir si el usuario no tiene acceso
+      alert("No tienes permisos para acceder al panel.");
+      await signOut(auth);
+      location.reload(); // Volver al inicio de sesión
+    }
   } else {
+    // Mostrar la pantalla de inicio de sesión si no está autenticado
     document.getElementById('login-modal').style.display = 'flex';
     document.getElementById('admin-panel').style.display = 'none';
   }
@@ -144,3 +157,76 @@ async function listarUsuarios(filter = "") {
     usersContainer.innerHTML = `<p>Error al cargar usuarios: ${error.message}</p>`;
   }
 }
+
+// Función para renovar la cuenta del usuario
+window.renovarUsuario = async function (userId, months) {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      let expirationDate = userData.expirationDate.toDate(); // Fecha de vencimiento actual del usuario
+      const now = new Date(); // Fecha actual
+
+      if (expirationDate < now) {
+        expirationDate = now; // Si está vencido, iniciar renovación desde hoy
+      }
+      
+      expirationDate.setMonth(expirationDate.getMonth() + months);
+
+      await updateDoc(userRef, { expirationDate: expirationDate });
+      alert(`Usuario renovado exitosamente por ${months} mes(es).`);
+      listarUsuarios(); // Actualizar la lista de usuarios
+    }
+  } catch (error) {
+    console.error("Error al renovar usuario:", error);
+    alert("Error al renovar usuario: " + error.message);
+  }
+};
+
+// Función para eliminar un usuario de Firestore y Authentication
+window.eliminarUsuario = async function (userId) {
+  try {
+    // Obtener referencia al usuario en Firestore
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+
+      // Eliminar usuario de Firestore
+      await deleteDoc(userRef);
+      console.log("Usuario eliminado de Firestore.");
+
+      // Eliminar usuario de Firebase Authentication (si tiene UID asociado)
+      const userToDelete = auth.currentUser;
+      if (userToDelete) {
+        await deleteUser(userToDelete);
+        console.log("Usuario eliminado de Firebase Authentication.");
+      }
+
+      alert("Usuario eliminado exitosamente de Firestore y Authentication.");
+    } else {
+      console.error("El usuario no existe en Firestore.");
+      alert("El usuario no se encontró en Firestore.");
+    }
+
+    listarUsuarios(); // Actualizar la lista de usuarios
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    alert("Error al eliminar usuario: " + error.message);
+  }
+};
+
+// Filtrar usuarios al escribir en el campo de búsqueda
+document.getElementById('search-bar').addEventListener('input', (e) => {
+  const filter = e.target.value;
+  listarUsuarios(filter);
+});
+
+// Cerrar sesión del administrador
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  await signOut(auth);
+  location.reload();
+});
