@@ -1,146 +1,80 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  onAuthStateChanged, 
-  signOut, 
-  createUserWithEmailAndPassword, 
-  deleteUser, 
-  updatePassword 
-} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { 
-  getFirestore, 
-  doc, 
-  getDocs, 
-  collection, 
-  query, 
-  updateDoc, 
-  getDoc, 
-  setDoc, 
-  deleteDoc 
-} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+// Configuración de Firebase
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDnGHxXiUkm1Onblu3en-V2v5Yxk9OnFL8",
-  authDomain: "replay-tv-33de1.firebaseapp.com",
-  projectId: "replay-tv-33de1",
-  storageBucket: "replay-tv-33de1.firebasestorage.app",
-  messagingSenderId: "19557200212",
-  appId: "1:19557200212:web:a9bb8b64cbd17be46758c1",
-  measurementId: "G-JLFC3D8V9Y"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
+// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Mostrar mensajes
-function showMessage(message, type = "success") {
-  const messageBox = document.getElementById("message-box");
-  messageBox.textContent = message;
-  messageBox.className = `message-box ${type}`;
-  messageBox.style.display = "block";
-  setTimeout(() => (messageBox.style.display = "none"), 5000);
-}
+// Referencia a la colección "users"
+const usersCollection = collection(db, "users");
 
-// Manejar creación de usuarios
-document.getElementById("user-form").addEventListener("submit", async (e) => {
+// Crear Usuario
+const userForm = document.getElementById("userForm");
+userForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const username = document.getElementById("username").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const expirationDateInput = document.getElementById("expirationDate").value;
 
-  if (!username || !email || !password || !expirationDateInput) {
-    showMessage("Por favor completa todos los campos.", "error");
-    return;
-  }
+  const username = document.getElementById("username").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const expirationDate = new Date(document.getElementById("expirationDate").value).toISOString();
 
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    const expirationDate = new Date(expirationDateInput);
-
-    await setDoc(doc(db, "users", user.uid), {
-      uid: user.uid,
+    // Crea un nuevo documento con UID único
+    await addDoc(usersCollection, {
       username,
       email,
       password,
-      expirationDate,
+      expirationDate
     });
 
-    showMessage("Usuario creado exitosamente.");
-    listarUsuarios();
+    alert("Usuario creado con éxito");
+    loadUsers(); // Actualiza la lista de usuarios
   } catch (error) {
-    console.error(error);
-    showMessage("Error al crear usuario.", "error");
+    console.error("Error al crear usuario: ", error);
   }
 });
 
-// Función para listar usuarios
-async function listarUsuarios() {
-  const usersContainer = document.getElementById("users-list");
-  usersContainer.innerHTML = "";
+// Cargar Usuarios
+async function loadUsers() {
+  const usersList = document.getElementById("users");
+  usersList.innerHTML = "";
 
   try {
-    const querySnapshot = await getDocs(collection(db, "users"));
+    const querySnapshot = await getDocs(usersCollection);
     querySnapshot.forEach((doc) => {
       const user = doc.data();
-      usersContainer.innerHTML += `
-        <div class="user-item">
-          <p><strong>Nombre:</strong> ${user.username}</p>
-          <p><strong>Email:</strong> ${user.email}</p>
-          <p><strong>Contraseña:</strong> ${user.password}</p>
-          <p><strong>Expiración:</strong> ${user.expirationDate.toDate().toLocaleDateString()}</p>
-          <div class="user-actions">
-            <button onclick="editarUsuario('${doc.id}')">Editar</button>
-            <button onclick="eliminarUsuario('${doc.id}')">Eliminar</button>
-          </div>
-        </div>
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>${user.username} (${user.email})</span>
+        <button onclick="deleteUser('${doc.id}')">Eliminar</button>
       `;
+      usersList.appendChild(li);
     });
   } catch (error) {
-    console.error(error);
-    showMessage("Error al listar usuarios.", "error");
+    console.error("Error al cargar usuarios: ", error);
   }
 }
 
-// Función para editar usuarios
-window.editarUsuario = async function (userId) {
-  const newUsername = prompt("Nuevo nombre:");
-  const newPassword = prompt("Nueva contraseña:");
-
-  if (!newUsername && !newPassword) {
-    showMessage("No se realizaron cambios.", "error");
-    return;
-  }
-
-  try {
-    const userRef = doc(db, "users", userId);
-    if (newUsername) await updateDoc(userRef, { username: newUsername });
-    if (newPassword) await updateDoc(userRef, { password: newPassword });
-    showMessage("Usuario actualizado.");
-    listarUsuarios();
-  } catch (error) {
-    console.error(error);
-    showMessage("Error al actualizar usuario.", "error");
-  }
-};
-
-// Función para eliminar usuarios
-window.eliminarUsuario = async function (userId) {
+// Eliminar Usuario
+async function deleteUser(userId) {
   try {
     await deleteDoc(doc(db, "users", userId));
-    showMessage("Usuario eliminado.");
-    listarUsuarios();
+    alert("Usuario eliminado con éxito");
+    loadUsers(); // Actualiza la lista de usuarios
   } catch (error) {
-    console.error(error);
-    showMessage("Error al eliminar usuario.", "error");
+    console.error("Error al eliminar usuario: ", error);
   }
-};
+}
 
-// Inicializar listado al cargar
-onAuthStateChanged(auth, (user) => {
-  if (user) listarUsuarios();
-});
+// Cargar usuarios al iniciar
+loadUsers();
