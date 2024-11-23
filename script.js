@@ -36,14 +36,10 @@ const db = getFirestore(app);
 // Verificar el estado de autenticación al cargar la página
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    console.log("Usuario autenticado con UID:", user.uid);
     try {
       const isAdmin = await verificarAdmin(user.uid);
       if (isAdmin) {
-        document.getElementById("login-modal").style.display = "none";
-        document.getElementById("admin-panel").style.display = "block";
-        document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
-        listarUsuarios();
+        mostrarPanelAdmin(user);
       } else {
         alert("Acceso denegado. Solo el administrador puede acceder al panel.");
         await signOut(auth);
@@ -56,23 +52,29 @@ onAuthStateChanged(auth, async (user) => {
       location.reload();
     }
   } else {
-    document.getElementById("login-modal").style.display = "flex";
-    document.getElementById("admin-panel").style.display = "none";
+    mostrarLogin();
   }
 });
+
+// Mostrar el panel del administrador
+function mostrarPanelAdmin(user) {
+  document.getElementById("login-modal").style.display = "none";
+  document.getElementById("admin-panel").style.display = "block";
+  document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
+  listarUsuarios();
+}
+
+// Mostrar el formulario de inicio de sesión
+function mostrarLogin() {
+  document.getElementById("login-modal").style.display = "flex";
+  document.getElementById("admin-panel").style.display = "none";
+}
 
 // Verificar si el usuario es administrador
 async function verificarAdmin(uid) {
   try {
     const adminDoc = await getDoc(doc(db, "adminUsers", uid));
-    if (adminDoc.exists()) {
-      const role = adminDoc.data().role;
-      console.log("Rol encontrado:", role);
-      return role === "admin";
-    } else {
-      console.error("El documento del administrador no existe.");
-      return false;
-    }
+    return adminDoc.exists() && adminDoc.data().role === "admin";
   } catch (error) {
     console.error("Error al verificar administrador:", error);
     return false;
@@ -119,7 +121,7 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
 
     alert("Usuario creado exitosamente.");
     document.getElementById("user-form").reset();
-    listarUsuarios();
+    listarUsuarios(); // Actualizar la lista de usuarios inmediatamente
   } catch (error) {
     console.error("Error al crear usuario:", error);
     alert("Error al crear usuario: " + error.message);
