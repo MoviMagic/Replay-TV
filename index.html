@@ -1,49 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard de Usuarios</title>
+  <title>Panel Administrativo - Replay TV</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script type="module" src="script.js" defer></script>
 </head>
+
 <body>
-  <div class="dashboard-container">
-    <header class="dashboard-header">
-      <h1>Panel de Gestión de Usuarios</h1>
-      <button id="logoutButton" class="btn logout-btn">Cerrar Sesión</button>
-    </header>
+  <header class="top-bar">
+    <div class="bar-content">
+      <h1>Replay TV - Panel Administrativo</h1>
+      <div class="admin-options">
+        <button class="content-button" id="content-btn">Contenidos</button>
+        <span id="admin-email-display">Administrador</span>
+        <button class="logout-button" id="logout-btn">Cerrar Sesión</button>
+      </div>
+    </div>
+  </header>
 
-    <main class="dashboard-main">
-      <section class="create-user-section">
-        <h2>Crear Usuario</h2>
-        <form id="userForm" class="form">
-          <div class="form-group">
-            <label for="username">Usuario</label>
-            <input type="text" id="username" placeholder="Nombre de usuario" required />
-          </div>
-          <div class="form-group">
-            <label for="email">Correo</label>
-            <input type="email" id="email" placeholder="Correo electrónico" required />
-          </div>
-          <div class="form-group">
-            <label for="password">Contraseña</label>
-            <input type="password" id="password" placeholder="Contraseña" required />
-          </div>
-          <div class="form-group">
-            <label for="expirationDate">Fecha de Expiración</label>
-            <input type="datetime-local" id="expirationDate" required />
-          </div>
-          <button type="submit" class="btn">Crear Usuario</button>
-        </form>
-      </section>
-
-      <section class="user-list-section">
-        <h2>Usuarios Registrados</h2>
-        <input type="text" id="searchBar" class="search-bar" placeholder="Buscar usuario..." />
-        <ul id="usersList" class="user-list"></ul>
-      </section>
-    </main>
+  <div id="login-modal">
+    <div class="login-card">
+      <h2>Iniciar Sesión</h2>
+      <form id="login-form">
+        <input type="email" id="admin-email" placeholder="Correo Electrónico" required>
+        <input type="password" id="admin-password" placeholder="Contraseña" required>
+        <button type="submit">Iniciar Sesión</button>
+      </form>
+    </div>
   </div>
+
+  <main class="main-container" id="admin-panel" style="display:none;">
+    <section class="dashboard">
+      <div class="card create-user">
+        <h2>Crear Usuario</h2>
+        <form id="user-form">
+          <input type="text" id="username" placeholder="Nombre de Usuario" required>
+          <input type="email" id="email" placeholder="Correo Electrónico" required>
+          <input type="password" id="password" placeholder="Contraseña" required>
+          <input type="date" id="expirationDate" required>
+          <button type="submit">Agregar Usuario</button>
+        </form>
+        <p id="message"></p>
+      </div>
+
+      <div class="card user-list">
+        <h2>Lista de Usuarios</h2>
+        <div class="search-bar">
+          <input type="text" id="search-bar" placeholder="Buscar usuario...">
+        </div>
+        <div id="users-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="script.js"></script>
 </body>
+
 </html>
