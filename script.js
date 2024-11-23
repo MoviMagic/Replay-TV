@@ -34,17 +34,35 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Verificar el estado de autenticación al cargar la página
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    document.getElementById("login-modal").style.display = "none";
-    document.getElementById("admin-panel").style.display = "block";
-    document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
-    listarUsuarios(); // Mostrar todos los usuarios al autenticarse
+    const isAdmin = await verificarAdmin(user.uid);
+    if (isAdmin) {
+      document.getElementById("login-modal").style.display = "none";
+      document.getElementById("admin-panel").style.display = "block";
+      document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
+      listarUsuarios(); // Mostrar todos los usuarios al autenticarse
+    } else {
+      alert("Acceso denegado. Solo el administrador puede acceder al panel.");
+      await signOut(auth);
+      location.reload();
+    }
   } else {
     document.getElementById("login-modal").style.display = "flex";
     document.getElementById("admin-panel").style.display = "none";
   }
 });
+
+// Verificar si el usuario es administrador
+async function verificarAdmin(uid) {
+  try {
+    const adminDoc = await getDoc(doc(db, "adminusers", uid));
+    return adminDoc.exists() && adminDoc.data().role === "admin";
+  } catch (error) {
+    console.error("Error al verificar administrador:", error);
+    return false;
+  }
+}
 
 // Manejar el formulario de inicio de sesión
 document.getElementById("login-form").addEventListener("submit", async (e) => {
@@ -178,18 +196,21 @@ window.renovarUsuario = async function (userId, months) {
 // Función para eliminar usuario
 window.eliminarUsuario = async function (userId) {
   try {
+    const currentUser = auth.currentUser;
+
+    // Prevenir eliminar al administrador actual
+    if (currentUser.uid === userId) {
+      throw new Error("No puedes eliminar tu propia cuenta.");
+    }
+
     // Eliminar de Firestore Database
     await deleteDoc(doc(db, "users", userId));
 
     // Eliminar usuario de Firebase Authentication
-    const user = auth.currentUser; // Usuario autenticado
-    if (user.uid === userId) {
-      throw new Error("No puedes eliminar tu propia cuenta.");
-    }
-    await deleteUser(user);
+    await deleteUser(auth.currentUser);
 
     alert("Usuario eliminado exitosamente de ambos sistemas.");
-    listarUsuarios(); // Actualizar la lista
+    listarUsuarios(); // Actualizar la lista de usuarios
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     alert("Error al eliminar usuario: " + error.message);
