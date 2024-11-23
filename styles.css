@@ -1,3 +1,4 @@
+/* Estilos generales */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -16,10 +17,12 @@ header {
   align-items: center;
   padding: 1rem;
   background-color: #0c1b33;
+  flex-wrap: wrap; /* Permite que los elementos bajen si no caben */
 }
 
 h1 {
   margin: 0;
+  font-size: 1.5rem;
 }
 
 form {
@@ -27,11 +30,17 @@ form {
   flex-direction: column;
   gap: 1rem;
   margin: 1rem 0;
+  width: 100%;
+  max-width: 500px; /* Limitar el ancho máximo */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 input, button {
   padding: 0.5rem;
   font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 button {
@@ -49,20 +58,25 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  word-wrap: break-word;
 }
 
 th, td {
   padding: 0.5rem;
   text-align: left;
   border: 1px solid #ffffff;
+  font-size: 0.9rem;
 }
 
 .error-message {
   color: red;
   font-size: 0.9rem;
+  text-align: center;
 }
+
 nav {
-  margin-left: 2rem;
+  margin: 1rem 0;
+  flex-basis: 100%; /* Asegurar que ocupa toda la línea */
 }
 
 .nav-links {
@@ -71,6 +85,8 @@ nav {
   gap: 1rem;
   padding: 0;
   margin: 0;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .nav-links li {
@@ -85,4 +101,69 @@ nav {
 
 .nav-links a:hover {
   color: #357ab8;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .nav-links {
+    flex-direction: column; /* Cambiar la navegación a una columna */
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  table {
+    font-size: 0.8rem; /* Reducir tamaño de fuente en tablas */
+  }
+
+  th, td {
+    padding: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1rem;
+  }
+
+  button {
+    font-size: 0.9rem;
+  }
+
+  table {
+    font-size: 0.7rem; /* Reducir aún más en pantallas pequeñas */
+  }
+
+  th, td {
+    padding: 0.2rem;
+  }
+}
+
+@media (orientation: portrait) {
+  header {
+    flex-direction: column;
+  }
+
+  form {
+    max-width: 90%; /* Formulario ocupa más ancho en vertical */
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
 }
