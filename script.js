@@ -14,7 +14,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const loginForm = document.getElementById("login-form");
+const loginForm = document.getElementById("admin-login-form");
 const userManagementContainer = document.getElementById("user-management-container");
 const loginContainer = document.getElementById("login-container");
 const userList = document.getElementById("user-list");
@@ -22,8 +22,8 @@ const userList = document.getElementById("user-list");
 // Login
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById("admin-email").value;
-  const password = document.getElementById("admin-password").value;
+  const email = document.getElementById("admin-login-email").value;
+  const password = document.getElementById("admin-login-password").value;
 
   try {
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -72,11 +72,11 @@ async function loadUsers() {
 }
 
 // Create User
-document.getElementById("create-user-form").addEventListener("submit", async (e) => {
+document.getElementById("add-user-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const username = document.getElementById("username").value;
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const username = document.getElementById("new-username").value;
+  const email = document.getElementById("new-email").value;
+  const password = document.getElementById("new-password").value;
 
   try {
     const newUser = await auth.createUserWithEmailAndPassword(email, password);
