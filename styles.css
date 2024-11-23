@@ -39,12 +39,6 @@ button:hover {
   background-color: #357ABD;
 }
 
-#message {
-  font-size: 0.9rem;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
 .devices-container {
   margin: 10px 0;
   padding: 10px;

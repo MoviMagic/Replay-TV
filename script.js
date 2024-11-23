@@ -3,6 +3,7 @@ import {
   getAuth, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  updatePassword, 
   deleteUser, 
   signOut 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
@@ -13,7 +14,7 @@ import {
   deleteDoc, 
   collection, 
   addDoc, 
-  getDoc, 
+  updateDoc, 
   getDocs 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
@@ -30,10 +31,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Crear Usuario con Dispositivos
+// CREAR USUARIO
 document.getElementById('user-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-
   const username = document.getElementById('username').value;
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
@@ -51,100 +51,37 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
       expirationDate: expirationDate
     });
 
-    const devicesCollectionRef = collection(db, `users/${userUID}/devices`);
-    await addDoc(devicesCollectionRef, {
-      deviceName: "Default Device",
-      lastLogin: new Date(),
-      platform: "Unknown"
-    });
-
-    alert("Usuario creado con dispositivo inicial.");
+    const devicesRef = collection(db, `users/${userUID}/devices`);
+    await addDoc(devicesRef, { deviceName: "Default", lastLogin: new Date(), platform: "Unknown" });
+    alert("Usuario creado correctamente.");
     listarUsuarios();
   } catch (error) {
     console.error("Error al crear usuario:", error);
-    alert("Error al crear usuario: " + error.message);
+    alert("Error al crear usuario.");
   }
 });
 
-// Listar Usuarios y sus Dispositivos
+// CARGAR USUARIOS
 async function listarUsuarios() {
   const usersContainer = document.getElementById('users-list');
   usersContainer.innerHTML = '';
 
   try {
-    const querySnapshot = await getDocs(collection(db, 'users'));
-
-    if (querySnapshot.empty) {
-      usersContainer.innerHTML = "<p>No hay usuarios creados.</p>";
-    } else {
-      querySnapshot.forEach(async (docSnapshot) => {
-        const userData = docSnapshot.data();
-
-        const userElement = document.createElement('div');
-        userElement.innerHTML = `
-          <p><strong>Nombre:</strong> ${userData.username}</p>
-          <p><strong>Email:</strong> ${userData.email}</p>
-          <div id="devices-${docSnapshot.id}" class="devices-container">
-            <p>Cargando dispositivos...</p>
-          </div>
-          <button onclick="eliminarUsuario('${docSnapshot.id}')">Eliminar Usuario</button>
-        `;
-        usersContainer.appendChild(userElement);
-
-        cargarDispositivos(docSnapshot.id);
-      });
-    }
-  } catch (error) {
-    console.error("Error al listar usuarios:", error);
-  }
-}
-
-async function cargarDispositivos(userId) {
-  const devicesContainer = document.getElementById(`devices-${userId}`);
-
-  try {
-    const devicesSnapshot = await getDocs(collection(db, `users/${userId}/devices`));
-    devicesContainer.innerHTML = "";
-
-    devicesSnapshot.forEach((deviceDoc) => {
-      const deviceData = deviceDoc.data();
-      devicesContainer.innerHTML += `
-        <div class="device-item">
-          <p>${deviceData.deviceName} (${deviceData.platform})</p>
-          <button onclick="eliminarDispositivo('${userId}', '${deviceDoc.id}')">Eliminar</button>
+    const snapshot = await getDocs(collection(db, 'users'));
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const userHTML = `
+        <div>
+          <p>${data.username} (${data.email})</p>
+          <button onclick="editarUsuario('${doc.id}')">Editar</button>
+          <button onclick="eliminarUsuario('${doc.id}')">Eliminar</button>
         </div>
       `;
+      usersContainer.innerHTML += userHTML;
     });
   } catch (error) {
-    console.error("Error al cargar dispositivos:", error);
+    console.error("Error al cargar usuarios.");
   }
 }
 
-window.eliminarUsuario = async function (userId) {
-  const confirmDelete = confirm("¿Eliminar usuario y sus dispositivos?");
-  if (!confirmDelete) return;
-
-  try {
-    const devicesSnapshot = await getDocs(collection(db, `users/${userId}/devices`));
-    devicesSnapshot.forEach(async (doc) => await deleteDoc(doc.ref));
-    await deleteDoc(doc(db, 'users', userId));
-
-    alert("Usuario eliminado.");
-    listarUsuarios();
-  } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-  }
-};
-
-window.eliminarDispositivo = async function (userId, deviceId) {
-  const confirmDelete = confirm("¿Eliminar este dispositivo?");
-  if (!confirmDelete) return;
-
-  try {
-    await deleteDoc(doc(db, `users/${userId}/devices/${deviceId}`));
-    alert("Dispositivo eliminado.");
-    cargarDispositivos(userId);
-  } catch (error) {
-    console.error("Error al eliminar dispositivo:", error);
-  }
-};
+// AGREGAR MÁS FUNCIONALIDADES AQUÍ COMO EDICIÓN, RENOVACIÓN, ETC.
