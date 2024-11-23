@@ -1,65 +1,55 @@
 <!DOCTYPE html>
-<html lang="es">
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel Administrativo - MoviMagic</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <title>Gestión de Usuarios</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-  <header class="top-bar">
-    <div class="bar-content">
-      <h1>MoviMagic - Panel Administrativo</h1>
-      <div class="admin-options">
-        <button class="content-button" id="content-btn">Contenidos</button>
-        <span id="admin-email-display">Administrador</span>
-        <button class="logout-button" id="logout-btn">Cerrar Sesión</button>
-      </div>
-    </div>
-  </header>
-
-  <div id="login-modal">
-    <div class="login-card">
-      <h2>Iniciar Sesión</h2>
-      <form id="login-form">
-        <input type="email" id="admin-email" placeholder="Correo Electrónico" required>
-        <input type="password" id="admin-password" placeholder="Contraseña" required>
-        <button type="submit">Iniciar Sesión</button>
-      </form>
-    </div>
+  <div id="login-container" class="hidden">
+    <h1>Administrador - Iniciar Sesión</h1>
+    <form id="login-form">
+      <input type="email" id="admin-email" placeholder="Correo electrónico" required>
+      <input type="password" id="admin-password" placeholder="Contraseña" required>
+      <button type="submit">Iniciar sesión</button>
+    </form>
+    <p id="login-error" class="error-message hidden">Error: Verifique sus credenciales.</p>
   </div>
 
-  <main class="main-container" id="admin-panel" style="display:none;">
-    <section class="dashboard">
-      <div class="card create-user">
-        <h2>Crear Usuario</h2>
-        <form id="user-form">
-          <input type="text" id="username" placeholder="Nombre de Usuario" required>
-          <input type="email" id="email" placeholder="Correo Electrónico" required>
-          <input type="password" id="password" placeholder="Contraseña" required>
-          <input type="date" id="expirationDate" required>
-          <button type="submit">Agregar Usuario</button>
-        </form>
-        <p id="message"></p>
-      </div>
-
-      <div class="card user-list">
-        <h2>Lista de Usuarios</h2>
-        <div class="search-bar">
-          <input type="text" id="search-bar" placeholder="Buscar usuario...">
-        </div>
-        <div id="users-list"></div>
-      </div>
+  <div id="user-management-container" class="hidden">
+    <header>
+      <h1>Gestión de Usuarios</h1>
+      <button id="logout-btn">Cerrar sesión</button>
+    </header>
+    <section>
+      <h2>Crear Usuario</h2>
+      <form id="create-user-form">
+        <input type="text" id="username" placeholder="Nombre de usuario" required>
+        <input type="email" id="email" placeholder="Correo electrónico" required>
+        <input type="password" id="password" placeholder="Contraseña" required>
+        <button type="submit">Crear Usuario</button>
+      </form>
     </section>
-  </main>
-
-  <script type="module" src="script.js"></script>
+    <section>
+      <h2>Lista de Usuarios</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre de Usuario</th>
+            <th>Correo</th>
+            <th>Contraseña</th>
+            <th>Fecha de Expiración</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="user-list"></tbody>
+      </table>
+    </section>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js"></script>
+  <script src="app.js"></script>
 </body>
-
 </html>
