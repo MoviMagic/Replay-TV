@@ -1,7 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js";
-
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDnGHxXiUkm1Onblu3en-V2v5Yxk9OnFL8",
   authDomain: "replay-tv-33de1.firebaseapp.com",
@@ -12,10 +9,10 @@ const firebaseConfig = {
   measurementId: "G-JLFC3D8V9Y"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 const loginForm = document.getElementById("login-form");
 const userManagementContainer = document.getElementById("user-management-container");
@@ -29,9 +26,9 @@ loginForm.addEventListener("submit", async (e) => {
   const password = document.getElementById("admin-password").value;
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const userDoc = await getDoc(doc(db, "adminUsers", userCredential.user.uid));
-    if (userDoc.exists() && userDoc.data().role === "admin") {
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    const userDoc = await db.collection("adminUsers").doc(userCredential.user.uid).get();
+    if (userDoc.exists && userDoc.data().role === "admin") {
       loginContainer.classList.add("hidden");
       userManagementContainer.classList.remove("hidden");
       loadUsers();
@@ -45,7 +42,7 @@ loginForm.addEventListener("submit", async (e) => {
 
 // Logout
 document.getElementById("logout-btn").addEventListener("click", () => {
-  signOut(auth).then(() => {
+  auth.signOut().then(() => {
     loginContainer.classList.remove("hidden");
     userManagementContainer.classList.add("hidden");
   });
@@ -53,7 +50,7 @@ document.getElementById("logout-btn").addEventListener("click", () => {
 
 // Load Users
 async function loadUsers() {
-  const querySnapshot = await getDocs(collection(db, "users"));
+  const querySnapshot = await db.collection("users").get();
   userList.innerHTML = "";
   querySnapshot.forEach((doc) => {
     const data = doc.data();
@@ -82,8 +79,8 @@ document.getElementById("create-user-form").addEventListener("submit", async (e)
   const password = document.getElementById("password").value;
 
   try {
-    const newUser = await auth.createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, "users", newUser.user.uid), {
+    const newUser = await auth.createUserWithEmailAndPassword(email, password);
+    await db.collection("users").doc(newUser.user.uid).set({
       username,
       email,
       password,
@@ -97,18 +94,18 @@ document.getElementById("create-user-form").addEventListener("submit", async (e)
 
 // Renew User
 async function renewUser(userId, months) {
-  const userRef = doc(db, "users", userId);
-  const userDoc = await getDoc(userRef);
-  if (userDoc.exists()) {
+  const userRef = db.collection("users").doc(userId);
+  const userDoc = await userRef.get();
+  if (userDoc.exists) {
     const expirationDate = new Date(userDoc.data().expirationDate.seconds * 1000);
     expirationDate.setMonth(expirationDate.getMonth() + months);
-    await updateDoc(userRef, { expirationDate });
+    await userRef.update({ expirationDate });
     loadUsers();
   }
 }
 
 // Delete User
 async function deleteUser(userId) {
-  await deleteDoc(doc(db, "users", userId));
+  await db.collection("users").doc(userId).delete();
   loadUsers();
 }

@@ -15,7 +15,62 @@
       <button type="submit">Iniciar sesión</button>
     </form>
     <p id="login-error" class="error-message hidden">Error: Verifique sus credenciales.</p>
+  </div><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Usuarios</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="login-container" class="hidden">
+    <h1>Administrador - Iniciar Sesión</h1>
+    <form id="login-form">
+      <input type="email" id="admin-email" placeholder="Correo electrónico" required>
+      <input type="password" id="admin-password" placeholder="Contraseña" required>
+      <button type="submit">Iniciar sesión</button>
+    </form>
+    <p id="login-error" class="error-message hidden">Error: Verifique sus credenciales.</p>
   </div>
+
+  <div id="user-management-container" class="hidden">
+    <header>
+      <h1>Gestión de Usuarios</h1>
+      <button id="logout-btn">Cerrar sesión</button>
+    </header>
+    <section>
+      <h2>Crear Usuario</h2>
+      <form id="create-user-form">
+        <input type="text" id="username" placeholder="Nombre de usuario" required>
+        <input type="email" id="email" placeholder="Correo electrónico" required>
+        <input type="password" id="password" placeholder="Contraseña" required>
+        <button type="submit">Crear Usuario</button>
+      </form>
+    </section>
+    <section>
+      <h2>Lista de Usuarios</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre de Usuario</th>
+            <th>Correo</th>
+            <th>Contraseña</th>
+            <th>Fecha de Expiración</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="user-list"></tbody>
+      </table>
+    </section>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore-compat.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+
 
   <div id="user-management-container" class="hidden">
     <header>
