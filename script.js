@@ -176,12 +176,20 @@ window.renovarUsuario = async function (userId, months) {
 // Función para eliminar usuario
 window.eliminarUsuario = async function (userId) {
   try {
+    // Eliminar usuario de Firebase Authentication
+    const userAuth = auth.currentUser;
+    if (!userAuth) {
+      throw new Error("No tienes permisos para eliminar usuarios.");
+    }
+
     // Eliminar de Firestore Database
     await deleteDoc(doc(db, "users", userId));
 
-    // Actualizar la lista
-    alert("Usuario eliminado exitosamente.");
-    listarUsuarios();
+    // Eliminar del módulo de autenticación
+    await deleteUser(await auth.getUser(userId));
+
+    alert("Usuario eliminado exitosamente de ambos sistemas.");
+    listarUsuarios(); // Actualizar la lista de usuarios
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     alert("Error al eliminar usuario: " + error.message);
