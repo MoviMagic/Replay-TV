@@ -19,17 +19,11 @@ body {
 }
 
 .bar-content {
-  width: 100%;
   max-width: 1300px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.top-bar h1 {
-  font-size: 1.6rem;
-  font-weight: bold;
 }
 
 .admin-options {
@@ -38,24 +32,24 @@ body {
   gap: 20px;
 }
 
-.logout-button {
-  background-color: #e84118;
-  color: #ffffff;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.logout-button:hover {
-  background-color: #c23616;
-}
-
-.main-container {
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 1300px;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+}
+
+.login-card {
+  background: #fff;
   padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard {
@@ -65,123 +59,8 @@ body {
 }
 
 .card {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+  background: #fff;
   padding: 20px;
-}
-
-.card h2 {
-  color: #4a90e2;
-  font-size: 1.4rem;
-  margin-bottom: 15px;
-}
-
-.create-user form,
-.user-list .search-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="date"],
-button {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="date"] {
-  background-color: #f0f2f5;
-  outline: none;
-}
-
-button {
-  background-color: #4a90e2;
-  color: #ffffff;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
-}
-
-button:hover {
-  background-color: #357ABD;
-}
-
-.user-item {
-  background-color: #e7f1ff;
-  color: #333;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.user-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.user-actions button {
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.user-actions button:hover {
-  background-color: #357ABD;
-}
-
-@media (max-width: 768px) {
-  .dashboard {
-    grid-template-columns: 1fr;
-  }
-
-  .bar-content {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-}
-
-@media (max-width: 480px) {
-  .top-bar h1 {
-    font-size: 1.3rem;
-  }
-
-  h2 {
-    font-size: 1.1rem;
-  }
-
-  input,
-  button {
-    font-size: 0.9rem;
-    padding: 10px;
-  }
-}
-.content-button {
-  background-color: #4a90e2;
-  color: #ffffff;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
-}
-
-.content-button:hover {
-  background-color: #357ABD;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
