@@ -11,7 +11,6 @@ import {
   setDoc, 
   deleteDoc, 
   updateDoc, 
-  getDoc, 
   getDocs, 
   collection 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
@@ -30,6 +29,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// UID del administrador permitido
+const ADMIN_UID = "6iHWl92CqaNCeb71l9yiwhrl9bw1";
+
 // Inicio de sesión
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -40,9 +42,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Verificar si el usuario es administrador
-    const adminDoc = await getDoc(doc(db, 'adminUsers', user.uid));
-    if (!adminDoc.exists()) {
+    // Verificar si el UID corresponde al administrador
+    if (user.uid !== ADMIN_UID) {
       alert("No tienes permisos para acceder al panel.");
       await signOut(auth);
       return;
@@ -68,9 +69,6 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
   const expirationDate = new Date(document.getElementById('expirationDate').value);
 
   try {
-    // Obtener el UID del administrador actual
-    const adminId = auth.currentUser.uid;
-
     // Crear el usuario en Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const userUID = userCredential.user.uid;
@@ -81,7 +79,7 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
       email,
       password,
       expirationDate,
-      adminId: adminId // UID del administrador
+      adminId: ADMIN_UID // UID del administrador
     });
 
     alert("Usuario creado correctamente.");
