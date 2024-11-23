@@ -2,9 +2,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase
 import {
   getAuth,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
-  createUserWithEmailAndPassword,
   deleteUser
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import {
@@ -15,23 +15,22 @@ import {
   collection,
   query,
   where,
-  getDoc,
   updateDoc,
+  getDoc,
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// Configuración de Firebase para Replay TV
+// Configuración de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDnGHxXiUkm1Onblu3en-V2v5Yxk9OnFL8",
-  authDomain: "replay-tv-33de1.firebaseapp.com",
-  projectId: "replay-tv-33de1",
-  storageBucket: "replay-tv-33de1.firebasestorage.app",
-  messagingSenderId: "19557200212",
-  appId: "1:19557200212:web:a9bb8b64cbd17be46758c1",
-  measurementId: "G-JLFC3D8V9Y"
+  apiKey: "AIzaSyDhPRVu8n_pZQzJPVWNFlJonmj5KEYsF10",
+  authDomain: "movimagic.firebaseapp.com",
+  projectId: "movimagic",
+  storageBucket: "movimagic.appspot.com",
+  messagingSenderId: "518388279864",
+  appId: "1:518388279864:web:a6f699391ec5bb627c14cd",
+  measurementId: "G-GG65HJV2T6"
 };
 
-// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -42,7 +41,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById("login-modal").style.display = "none";
     document.getElementById("admin-panel").style.display = "block";
     document.getElementById("admin-email-display").innerText = `Administrador: ${user.email}`;
-    listarUsuarios(); // Mostrar usuarios al iniciar sesión
+    listarUsuarios(); // Llamar a listarUsuarios al autenticarse o recargar
   } else {
     document.getElementById("login-modal").style.display = "flex";
     document.getElementById("admin-panel").style.display = "none";
@@ -80,11 +79,11 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
 
-    // Agregar el usuario a la colección "users" en Firestore
+    // Guardar usuario en Firestore Database
     await setDoc(doc(db, "users", uid), {
       username,
       email,
-      expirationDate: expirationDate, // Guardar como una fecha de Firestore
+      expirationDate: expirationDate, // Guardar como una fecha en Firestore
       adminId: auth.currentUser.uid // Vincular al administrador actual
     });
 
@@ -97,7 +96,7 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
   }
 });
 
-// Listar usuarios creados
+// Función para listar los usuarios creados
 async function listarUsuarios(filter = "") {
   const usersContainer = document.getElementById("users-list");
   usersContainer.innerHTML = ""; // Limpiar contenido previo
@@ -142,7 +141,7 @@ async function listarUsuarios(filter = "") {
   }
 }
 
-// Renovar usuario por meses
+// Función para renovar la cuenta del usuario desde la fecha adecuada (fecha actual o fecha de vencimiento)
 window.renovarUsuario = async function (userId, months) {
   try {
     const userRef = doc(db, "users", userId);
@@ -151,17 +150,17 @@ window.renovarUsuario = async function (userId, months) {
     if (userDoc.exists()) {
       const userData = userDoc.data();
       let expirationDate = userData.expirationDate.toDate(); // Fecha de vencimiento actual del usuario
-      const now = new Date();
+      const now = new Date(); // Fecha actual
 
-      // Si la fecha de vencimiento ya pasó, comienza la renovación desde hoy
+      // Comprobar si el usuario está vencido o no
       if (expirationDate < now) {
-        expirationDate = now;
+        expirationDate = now; // Si está vencido, iniciar renovación desde hoy
       }
 
-      // Sumar meses a la fecha de vencimiento
+      // Sumar los meses a la fecha de inicio de la renovación (fecha actual o fecha de vencimiento)
       expirationDate.setMonth(expirationDate.getMonth() + months);
 
-      await updateDoc(userRef, { expirationDate });
+      await updateDoc(userRef, { expirationDate: expirationDate });
       alert(`Usuario renovado exitosamente por ${months} mes(es).`);
       listarUsuarios(); // Actualizar la lista de usuarios
     }
@@ -171,25 +170,23 @@ window.renovarUsuario = async function (userId, months) {
   }
 };
 
-// Eliminar usuario
+// Función para eliminar usuario
 window.eliminarUsuario = async function (userId) {
   try {
-    // Eliminar de Firestore Database
-    await deleteDoc(doc(db, "users", userId));
-
     // Eliminar de Firebase Authentication
-    const userToDelete = auth.currentUser;
-    await deleteUser(userToDelete);
+    const userRef = doc(db, "users", userId);
+    await deleteDoc(userRef);
 
+    // Actualizar la lista
     alert("Usuario eliminado exitosamente.");
-    listarUsuarios(); // Actualizar la lista de usuarios
+    listarUsuarios();
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     alert("Error al eliminar usuario: " + error.message);
   }
 };
 
-// Filtrar usuarios por búsqueda
+// Filtrar usuarios al escribir en el campo de búsqueda
 document.getElementById("search-bar").addEventListener("input", (e) => {
   const filter = e.target.value;
   listarUsuarios(filter);
@@ -203,5 +200,5 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
 
 // Redirigir al enlace de contenidos al hacer clic en el botón
 document.getElementById("content-btn").addEventListener("click", () => {
-  window.location.href = "https://replay-tv.github.io/generador_contenidos/";
+  window.location.href = "https://movimagic.github.io/generador_contenidos/";
 });
