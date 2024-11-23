@@ -3,6 +3,7 @@ import {
   getAuth, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  deleteUser, 
   signOut 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { 
@@ -12,7 +13,8 @@ import {
   deleteDoc, 
   updateDoc, 
   getDocs, 
-  collection 
+  collection, 
+  getDoc 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -42,21 +44,19 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Verificar si el UID corresponde al administrador
     if (user.uid !== ADMIN_UID) {
       alert("No tienes permisos para acceder al panel.");
       await signOut(auth);
       return;
     }
 
-    // Mostrar el panel si es administrador
     document.getElementById('login-modal').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('admin-email-display').innerText = `Administrador: ${email}`;
     listarUsuarios();
   } catch (error) {
-    console.error("Error al iniciar sesión:", error.message);
-    alert("Error al iniciar sesión: " + error.message);
+    alert("Error al iniciar sesión.");
+    console.error(error);
   }
 });
 
@@ -69,24 +69,21 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
   const expirationDate = new Date(document.getElementById('expirationDate').value);
 
   try {
-    // Crear el usuario en Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const userUID = userCredential.user.uid;
 
-    // Guardar el usuario en Firestore con el adminId
     await setDoc(doc(db, 'users', userUID), {
       username,
       email,
       password,
       expirationDate,
-      adminId: ADMIN_UID // UID del administrador
+      adminId: ADMIN_UID
     });
 
     alert("Usuario creado correctamente.");
     listarUsuarios();
   } catch (error) {
-    console.error("Error al crear usuario:", error.message);
-    alert("Error al crear usuario: " + error.message);
+    console.error("Error al crear usuario:", error);
   }
 });
 
@@ -98,34 +95,28 @@ async function listarUsuarios() {
   try {
     const querySnapshot = await getDocs(collection(db, 'users'));
 
-    if (querySnapshot.empty) {
-      usersContainer.innerHTML = "<p>No hay usuarios creados.</p>";
-      return;
-    }
-
     querySnapshot.forEach((docSnapshot) => {
       const userData = docSnapshot.data();
 
       const userElement = document.createElement('div');
       userElement.innerHTML = `
-        <p><strong>Nombre:</strong> ${userData.username}</p>
+        <p><strong>Usuario:</strong> ${userData.username}</p>
         <p><strong>Email:</strong> ${userData.email}</p>
         <p><strong>Contraseña:</strong> ${userData.password}</p>
-        <p><strong>Fecha de Expiración:</strong> ${new Date(userData.expirationDate).toLocaleDateString()}</p>
-        <p><strong>Admin ID:</strong> ${userData.adminId}</p>
+        <p><strong>Expira:</strong> ${new Date(userData.expirationDate).toLocaleDateString()}</p>
         <button onclick="eliminarUsuario('${docSnapshot.id}')">Eliminar Usuario</button>
         <button onclick="editarUsuario('${docSnapshot.id}')">Editar Usuario</button>
       `;
       usersContainer.appendChild(userElement);
     });
   } catch (error) {
-    console.error("Error al listar usuarios:", error.message);
+    console.error("Error al listar usuarios:", error);
   }
 }
 
 // Eliminar usuario
 window.eliminarUsuario = async (userId) => {
-  const confirmDelete = confirm("¿Estás seguro de que deseas eliminar este usuario?");
+  const confirmDelete = confirm("¿Eliminar este usuario?");
   if (!confirmDelete) return;
 
   try {
@@ -133,37 +124,30 @@ window.eliminarUsuario = async (userId) => {
     alert("Usuario eliminado correctamente.");
     listarUsuarios();
   } catch (error) {
-    console.error("Error al eliminar usuario:", error.message);
-    alert("Error al eliminar usuario: " + error.message);
+    console.error("Error al eliminar usuario:", error);
   }
 };
 
 // Editar usuario
 window.editarUsuario = async (userId) => {
-  const newUsername = prompt("Ingrese nuevo nombre de usuario:");
-  const newPassword = prompt("Ingrese nueva contraseña:");
+  const newUsername = prompt("Nuevo nombre de usuario:");
+  const newPassword = prompt("Nueva contraseña:");
 
   try {
     await updateDoc(doc(db, 'users', userId), {
       username: newUsername,
-      password: newPassword,
+      password: newPassword
     });
 
-    alert("Usuario editado correctamente.");
+    alert("Usuario actualizado correctamente.");
     listarUsuarios();
   } catch (error) {
-    console.error("Error al editar usuario:", error.message);
-    alert("Error al editar usuario: " + error.message);
+    console.error("Error al editar usuario:", error);
   }
 };
 
 // Cerrar sesión
 document.getElementById('logout-btn').addEventListener('click', async () => {
-  try {
-    await signOut(auth);
-    location.reload();
-  } catch (error) {
-    console.error("Error al cerrar sesión:", error.message);
-    alert("Error al cerrar sesión: " + error.message);
-  }
+  await signOut(auth);
+  location.reload();
 });
