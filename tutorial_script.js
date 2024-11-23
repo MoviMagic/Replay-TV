@@ -16,8 +16,13 @@ const db = firebase.firestore();
 
 // Verificar si el usuario autenticado es administrador
 async function isAdmin(user) {
-  const userDoc = await db.collection("adminUsers").doc(user.uid).get();
-  return userDoc.exists && userDoc.data().role === "admin";
+  try {
+    const userDoc = await db.collection("adminUsers").doc(user.uid).get();
+    return userDoc.exists && userDoc.data().role === "admin";
+  } catch (error) {
+    console.error("Error al verificar el rol de administrador:", error);
+    return false;
+  }
 }
 
 // Manejar el evento de envío del formulario
@@ -26,28 +31,34 @@ const tutorialForm = document.getElementById("courseForm");
 tutorialForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  // Validar si el usuario está autenticado
-  const user = firebase.auth().currentUser;
-  if (!user) {
-    alert("No estás autenticado. Por favor, inicia sesión.");
-    return;
-  }
-
-  // Validar si el usuario es administrador
-  const isUserAdmin = await isAdmin(user);
-  if (!isUserAdmin) {
-    alert("No tienes permisos para agregar tutoriales.");
-    return;
-  }
-
-  // Obtener los valores del formulario
-  const name = document.getElementById("name").value.trim();
-  const addedDate = document.getElementById("addedDate").value;
-  const duration = document.getElementById("duration").value.trim();
-  const posterUrl = document.getElementById("posterUrl").value.trim();
-  const videoUrl = document.getElementById("videoUrl").value.trim();
-
   try {
+    // Validar si el usuario está autenticado
+    const user = auth.currentUser;
+    if (!user) {
+      alert("No estás autenticado. Por favor, inicia sesión.");
+      return;
+    }
+
+    // Validar si el usuario es administrador
+    const isUserAdmin = await isAdmin(user);
+    if (!isUserAdmin) {
+      alert("No tienes permisos para agregar tutoriales.");
+      return;
+    }
+
+    // Obtener los valores del formulario
+    const name = document.getElementById("name").value.trim();
+    const addedDate = document.getElementById("addedDate").value;
+    const duration = document.getElementById("duration").value.trim();
+    const posterUrl = document.getElementById("posterUrl").value.trim();
+    const videoUrl = document.getElementById("videoUrl").value.trim();
+
+    // Validar los campos
+    if (!name || !addedDate || !duration || !posterUrl || !videoUrl) {
+      alert("Por favor, completa todos los campos del formulario.");
+      return;
+    }
+
     // Convertir la fecha a Timestamp
     const timestamp = firebase.firestore.Timestamp.fromDate(new Date(addedDate));
 
@@ -69,7 +80,7 @@ tutorialForm.addEventListener("submit", async (e) => {
 });
 
 // Escuchar cambios de autenticación
-firebase.auth().onAuthStateChanged((user) => {
+auth.onAuthStateChanged((user) => {
   if (user) {
     console.log("Usuario autenticado:", user.uid);
   } else {
