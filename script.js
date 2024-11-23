@@ -13,10 +13,9 @@ import {
   getDocs, 
   collection, 
   query, 
-  where, 
   updateDoc, 
   getDoc, 
-  addDoc, 
+  setDoc, 
   deleteDoc 
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
@@ -84,15 +83,13 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
     // Convertir la fecha de expiración a formato Timestamp de Firestore
     const expirationDate = new Date(expirationDateInput);
 
-    // Guardar los datos del usuario en Firestore
-    const usersCollection = collection(db, 'users');
-    await addDoc(usersCollection, {
-      uid: user.uid, // Guardar el UID del usuario autenticado
+    // Guardar los datos del usuario en Firestore con UID como ID del documento
+    await setDoc(doc(db, 'users', user.uid), {
+      uid: user.uid,
       username: username,
       email: email,
       password: password,
       expirationDate: expirationDate,
-      adminId: auth.currentUser.uid // Asegurarse de vincular al administrador actual
     });
 
     alert("Usuario creado exitosamente.");
@@ -104,13 +101,14 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
   }
 });
 
-// Función para listar los usuarios creados
+// Función para listar todos los usuarios de Firestore
 async function listarUsuarios(filter = "") {
   const usersContainer = document.getElementById('users-list');
   usersContainer.innerHTML = ''; // Limpiar contenido previo
 
   try {
-    const q = query(collection(db, 'users'), where("adminId", "==", auth.currentUser.uid));
+    // Obtener todos los usuarios de la colección "users"
+    const q = query(collection(db, 'users')); // Sin filtro por adminId
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
@@ -146,83 +144,3 @@ async function listarUsuarios(filter = "") {
     usersContainer.innerHTML = `<p>Error al cargar usuarios: ${error.message}</p>`;
   }
 }
-
-// Función para renovar la cuenta del usuario
-window.renovarUsuario = async function (userId, months) {
-  try {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      let expirationDate = userData.expirationDate.toDate(); // Fecha de vencimiento actual del usuario
-      const now = new Date(); // Fecha actual
-
-      if (expirationDate < now) {
-        expirationDate = now; // Si está vencido, iniciar renovación desde hoy
-      }
-      
-      expirationDate.setMonth(expirationDate.getMonth() + months);
-
-      await updateDoc(userRef, { expirationDate: expirationDate });
-      alert(`Usuario renovado exitosamente por ${months} mes(es).`);
-      listarUsuarios(); // Actualizar la lista de usuarios
-    }
-  } catch (error) {
-    console.error("Error al renovar usuario:", error);
-    alert("Error al renovar usuario: " + error.message);
-  }
-};
-
-// Función para eliminar un usuario de Firestore y Authentication
-window.eliminarUsuario = async function (userId) {
-  try {
-    // Obtener referencia al usuario en Firestore
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-
-      // Eliminar usuario de Firestore
-      await deleteDoc(userRef);
-      console.log("Usuario eliminado de Firestore.");
-
-      // Eliminar usuario de Firebase Authentication (si tiene UID asociado)
-      if (userData.uid) {
-        const userToDelete = auth.currentUser;
-        if (userToDelete) {
-          await deleteUser(userToDelete);
-          console.log("Usuario eliminado de Firebase Authentication.");
-        }
-      }
-
-      alert("Usuario eliminado exitosamente de Firestore y Authentication.");
-    } else {
-      console.error("El usuario no existe en Firestore.");
-      alert("El usuario no se encontró en Firestore.");
-    }
-
-    listarUsuarios(); // Actualizar la lista de usuarios
-  } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    alert("Error al eliminar usuario: " + error.message);
-  }
-};
-
-// Filtrar usuarios al escribir en el campo de búsqueda
-document.getElementById('search-bar').addEventListener('input', (e) => {
-  const filter = e.target.value;
-  listarUsuarios(filter);
-});
-
-// Cerrar sesión del administrador
-document.getElementById('logout-btn').addEventListener('click', async () => {
-  await signOut(auth);
-  location.reload();
-});
-
-// Redirigir al enlace de contenidos al hacer clic en el botón
-document.getElementById('content-btn').addEventListener('click', () => {
-  window.location.href = "https://movimagic.github.io/generador_contenidos/";
-});
