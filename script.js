@@ -18,6 +18,7 @@ const loginForm = document.getElementById("admin-login-form");
 const userManagementContainer = document.getElementById("user-management-container");
 const loginContainer = document.getElementById("login-container");
 const userList = document.getElementById("user-list");
+const deviceList = document.getElementById("device-list");
 
 // Login
 loginForm.addEventListener("submit", async (e) => {
@@ -59,13 +60,14 @@ async function loadUsers() {
         <td>${data.username}</td>
         <td>${data.email}</td>
         <td>${data.password}</td>
-        <td>${new Date(data.expirationDate.seconds * 1000).toLocaleDateString()}</td>
+        <td>${new Date(data.expirationDate).toLocaleDateString()}</td>
         <td>
           <button onclick="renewUser('${doc.id}', 1)">+1 Mes</button>
           <button onclick="renewUser('${doc.id}', 3)">+3 Meses</button>
           <button onclick="renewUser('${doc.id}', 6)">+6 Meses</button>
           <button onclick="renewUser('${doc.id}', 12)">+12 Meses</button>
           <button onclick="deleteUser('${doc.id}')">Eliminar</button>
+          <button onclick="loadDevices('${doc.id}')">Ver Dispositivos</button>
         </td>
       </tr>`;
   });
@@ -77,6 +79,7 @@ document.getElementById("add-user-form").addEventListener("submit", async (e) =>
   const username = document.getElementById("new-username").value;
   const email = document.getElementById("new-email").value;
   const password = document.getElementById("new-password").value;
+  const expirationDate = document.getElementById("expiration-date").value;
 
   try {
     const newUser = await auth.createUserWithEmailAndPassword(email, password);
@@ -84,7 +87,7 @@ document.getElementById("add-user-form").addEventListener("submit", async (e) =>
       username,
       email,
       password,
-      expirationDate: new Date(),
+      expirationDate: new Date(expirationDate).toISOString(),
     });
     loadUsers();
   } catch (error) {
@@ -97,9 +100,9 @@ async function renewUser(userId, months) {
   const userRef = db.collection("users").doc(userId);
   const userDoc = await userRef.get();
   if (userDoc.exists) {
-    const expirationDate = new Date(userDoc.data().expirationDate.seconds * 1000);
+    const expirationDate = new Date(userDoc.data().expirationDate);
     expirationDate.setMonth(expirationDate.getMonth() + months);
-    await userRef.update({ expirationDate });
+    await userRef.update({ expirationDate: expirationDate.toISOString() });
     loadUsers();
   }
 }
@@ -108,4 +111,26 @@ async function renewUser(userId, months) {
 async function deleteUser(userId) {
   await db.collection("users").doc(userId).delete();
   loadUsers();
+}
+
+// Load Devices
+async function loadDevices(userId) {
+  const devicesRef = db.collection("users").doc(userId).collection("devices");
+  const querySnapshot = await devicesRef.get();
+  deviceList.innerHTML = "";
+  querySnapshot.forEach((doc) => {
+    deviceList.innerHTML += `
+      <tr>
+        <td>${doc.id}</td>
+        <td>
+          <button onclick="deleteDevice('${userId}', '${doc.id}')">Eliminar</button>
+        </td>
+      </tr>`;
+  });
+}
+
+// Delete Device
+async function deleteDevice(userId, deviceId) {
+  await db.collection("users").doc(userId).collection("devices").doc(deviceId).delete();
+  loadDevices(userId);
 }

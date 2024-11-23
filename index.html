@@ -28,6 +28,7 @@
         <input type="text" id="new-username" placeholder="Nombre de usuario" required>
         <input type="email" id="new-email" placeholder="Correo electrónico" required>
         <input type="password" id="new-password" placeholder="Contraseña" required>
+        <input type="date" id="expiration-date" placeholder="Fecha de Expiración" required>
         <button type="submit">Crear Usuario</button>
       </form>
     </section>
@@ -44,6 +45,18 @@
           </tr>
         </thead>
         <tbody id="user-list"></tbody>
+      </table>
+    </section>
+    <section>
+      <h2>Dispositivos del Usuario</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre del Dispositivo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="device-list"></tbody>
       </table>
     </section>
   </div>
