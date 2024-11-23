@@ -1,6 +1,24 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDocs, collection, query, where, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  createUserWithEmailAndPassword,
+  deleteUser
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDocs,
+  collection,
+  query,
+  where,
+  getDoc,
+  updateDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 // Configuración de Firebase para Replay TV
 const firebaseConfig = {
@@ -49,6 +67,7 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const username = document.getElementById("username").value;
   const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
   const expirationDate = new Date(document.getElementById("expirationDate").value);
 
   if (!auth.currentUser) {
@@ -57,8 +76,12 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
   }
 
   try {
-    const userRef = doc(collection(db, "users")); // Crear un nuevo documento en la colección "users"
-    await setDoc(userRef, {
+    // Crear usuario en Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    // Agregar el usuario a la colección "users" en Firestore
+    await setDoc(doc(db, "users", uid), {
       username,
       email,
       expirationDate: expirationDate, // Guardar como una fecha de Firestore
@@ -151,8 +174,13 @@ window.renovarUsuario = async function (userId, months) {
 // Eliminar usuario
 window.eliminarUsuario = async function (userId) {
   try {
-    const userRef = doc(db, "users", userId);
-    await deleteDoc(userRef);
+    // Eliminar de Firestore Database
+    await deleteDoc(doc(db, "users", userId));
+
+    // Eliminar de Firebase Authentication
+    const userToDelete = auth.currentUser;
+    await deleteUser(userToDelete);
+
     alert("Usuario eliminado exitosamente.");
     listarUsuarios(); // Actualizar la lista de usuarios
   } catch (error) {
