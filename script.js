@@ -37,22 +37,18 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   const password = document.getElementById('admin-password').value;
 
   try {
-    console.log("Iniciando sesión...");
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Verificar si es administrador
-    console.log("Verificando permisos del administrador...");
+    // Verificar si el usuario es administrador
     const adminDoc = await getDoc(doc(db, 'adminUsers', user.uid));
     if (!adminDoc.exists()) {
       alert("No tienes permisos para acceder al panel.");
-      console.error("El usuario no tiene permisos de administrador.");
       await signOut(auth);
       return;
     }
 
-    // Mostrar el panel
-    console.log("Acceso permitido. Mostrando el panel...");
+    // Mostrar el panel si es administrador
     document.getElementById('login-modal').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     document.getElementById('admin-email-display').innerText = `Administrador: ${email}`;
@@ -72,20 +68,22 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
   const expirationDate = new Date(document.getElementById('expirationDate').value);
 
   try {
-    console.log("Creando usuario...");
+    // Obtener el UID del administrador actual
+    const adminId = auth.currentUser.uid;
+
+    // Crear el usuario en Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const userUID = userCredential.user.uid;
 
-    // Guardar datos en Firestore
+    // Guardar el usuario en Firestore con el adminId
     await setDoc(doc(db, 'users', userUID), {
       username,
       email,
       password,
       expirationDate,
-      adminId: auth.currentUser.uid
+      adminId: adminId // UID del administrador
     });
 
-    console.log("Usuario creado correctamente.");
     alert("Usuario creado correctamente.");
     listarUsuarios();
   } catch (error) {
@@ -100,7 +98,6 @@ async function listarUsuarios() {
   usersContainer.innerHTML = '';
 
   try {
-    console.log("Cargando lista de usuarios...");
     const querySnapshot = await getDocs(collection(db, 'users'));
 
     if (querySnapshot.empty) {
@@ -117,49 +114,14 @@ async function listarUsuarios() {
         <p><strong>Email:</strong> ${userData.email}</p>
         <p><strong>Contraseña:</strong> ${userData.password}</p>
         <p><strong>Fecha de Expiración:</strong> ${new Date(userData.expirationDate).toLocaleDateString()}</p>
+        <p><strong>Admin ID:</strong> ${userData.adminId}</p>
         <button onclick="eliminarUsuario('${docSnapshot.id}')">Eliminar Usuario</button>
         <button onclick="editarUsuario('${docSnapshot.id}')">Editar Usuario</button>
-        <div id="devices-${docSnapshot.id}" class="devices-container">
-          <p><strong>Dispositivos:</strong></p>
-          <div class="device-list">Cargando dispositivos...</div>
-        </div>
       `;
       usersContainer.appendChild(userElement);
-
-      // Cargar dispositivos del usuario
-      cargarDispositivos(docSnapshot.id);
     });
   } catch (error) {
-    console.error("Error al cargar usuarios:", error.message);
-  }
-}
-
-// Cargar dispositivos de un usuario
-async function cargarDispositivos(userId) {
-  const devicesContainer = document.querySelector(`#devices-${userId} .device-list`);
-  devicesContainer.innerHTML = '';
-
-  try {
-    console.log(`Cargando dispositivos del usuario ${userId}...`);
-    const devicesSnapshot = await getDocs(collection(db, `users/${userId}/devices`));
-
-    if (devicesSnapshot.empty) {
-      devicesContainer.innerHTML = "<p>No hay dispositivos registrados.</p>";
-      return;
-    }
-
-    devicesSnapshot.forEach((deviceDoc) => {
-      const deviceData = deviceDoc.data();
-      const deviceElement = document.createElement('div');
-      deviceElement.innerHTML = `
-        <p>${deviceData.deviceName} (${deviceData.platform}) - Último login: ${new Date(deviceData.lastLogin.toDate()).toLocaleString()}</p>
-        <button onclick="eliminarDispositivo('${userId}', '${deviceDoc.id}')">Eliminar Dispositivo</button>
-      `;
-      devicesContainer.appendChild(deviceElement);
-    });
-  } catch (error) {
-    console.error(`Error al cargar dispositivos del usuario ${userId}:`, error.message);
-    devicesContainer.innerHTML = "<p>Error al cargar dispositivos.</p>";
+    console.error("Error al listar usuarios:", error.message);
   }
 }
 
@@ -169,14 +131,6 @@ window.eliminarUsuario = async (userId) => {
   if (!confirmDelete) return;
 
   try {
-    console.log(`Eliminando usuario ${userId}...`);
-    // Eliminar dispositivos del usuario
-    const devicesSnapshot = await getDocs(collection(db, `users/${userId}/devices`));
-    for (const deviceDoc of devicesSnapshot.docs) {
-      await deleteDoc(deviceDoc.ref);
-    }
-
-    // Eliminar usuario
     await deleteDoc(doc(db, 'users', userId));
     alert("Usuario eliminado correctamente.");
     listarUsuarios();
@@ -186,26 +140,28 @@ window.eliminarUsuario = async (userId) => {
   }
 };
 
-// Eliminar dispositivo
-window.eliminarDispositivo = async (userId, deviceId) => {
-  const confirmDelete = confirm("¿Estás seguro de que deseas eliminar este dispositivo?");
-  if (!confirmDelete) return;
+// Editar usuario
+window.editarUsuario = async (userId) => {
+  const newUsername = prompt("Ingrese nuevo nombre de usuario:");
+  const newPassword = prompt("Ingrese nueva contraseña:");
 
   try {
-    console.log(`Eliminando dispositivo ${deviceId} del usuario ${userId}...`);
-    await deleteDoc(doc(db, `users/${userId}/devices/${deviceId}`));
-    alert("Dispositivo eliminado correctamente.");
-    cargarDispositivos(userId);
+    await updateDoc(doc(db, 'users', userId), {
+      username: newUsername,
+      password: newPassword,
+    });
+
+    alert("Usuario editado correctamente.");
+    listarUsuarios();
   } catch (error) {
-    console.error("Error al eliminar dispositivo:", error.message);
-    alert("Error al eliminar dispositivo: " + error.message);
+    console.error("Error al editar usuario:", error.message);
+    alert("Error al editar usuario: " + error.message);
   }
 };
 
 // Cerrar sesión
 document.getElementById('logout-btn').addEventListener('click', async () => {
   try {
-    console.log("Cerrando sesión...");
     await signOut(auth);
     location.reload();
   } catch (error) {
