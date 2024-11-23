@@ -61,3 +61,28 @@ th, td {
   color: red;
   font-size: 0.9rem;
 }
+nav {
+  margin-left: 2rem;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-links li {
+  display: inline;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #4a90e2;
+  font-weight: bold;
+}
+
+.nav-links a:hover {
+  color: #357ab8;
+}
