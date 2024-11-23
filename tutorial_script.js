@@ -10,8 +10,8 @@ const firebaseConfig = {
 };
 
 // Inicializar Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 const courseForm = document.getElementById("courseForm");
 const successMessage = document.getElementById("successMessage");
@@ -20,7 +20,7 @@ courseForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     // Obtener valores del formulario
-    const name = document.getElementById("name").value.trim(); // Usaremos esto como el ID del documento
+    const name = document.getElementById("name").value.trim();
     const addedDate = document.getElementById("addedDate").value;
     const duration = document.getElementById("duration").value.trim();
     const posterUrl = document.getElementById("posterUrl").value.trim();
@@ -32,7 +32,7 @@ courseForm.addEventListener("submit", async (e) => {
             return;
         }
 
-        // Convertir la fecha en un Timestamp
+        // Convertir fecha a Timestamp
         const timestamp = addedDate ? firebase.firestore.Timestamp.fromDate(new Date(addedDate)) : null;
 
         if (!timestamp) {
@@ -40,7 +40,7 @@ courseForm.addEventListener("submit", async (e) => {
             return;
         }
 
-        // Agregar documento con ID personalizado (nombre del curso)
+        // Agregar documento con ID personalizado
         await db.collection("cursos").doc(name).set({
             addedDate: timestamp,
             duration: duration,
