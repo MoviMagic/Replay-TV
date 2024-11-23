@@ -77,13 +77,13 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
 
-    // Guardar usuario en Firestore Database, incluyendo el campo "password"
+    // Guardar usuario en Firestore Database
     await setDoc(doc(db, "users", uid), {
       username,
       email,
       password, // Agregar el password al documento
       expirationDate: expirationDate, // Guardar como una fecha en Firestore
-      adminId: "Sm4NkYQ5GGd5fwd1Q7tHASiBZC52" // Fijar el adminId del administrador
+      adminId: auth.currentUser.uid // Asociar con el administrador actual
     });
 
     alert("Usuario creado exitosamente.");
@@ -134,7 +134,7 @@ async function listarUsuarios(filter = "") {
             <button onclick="renovarUsuario('${userId}', 3)">Renovar 3 meses</button>
             <button onclick="renovarUsuario('${userId}', 6)">Renovar 6 meses</button>
             <button onclick="renovarUsuario('${userId}', 12)">Renovar 12 meses</button>
-            <button onclick="eliminarUsuario('${userId}', '${userData.email}')">Eliminar Usuario</button>
+            <button onclick="eliminarUsuario('${userId}')">Eliminar Usuario</button>
           </div>
         `;
         usersContainer.appendChild(userElement);
@@ -146,7 +146,7 @@ async function listarUsuarios(filter = "") {
   }
 }
 
-// Función para renovar la cuenta del usuario desde la fecha adecuada (fecha actual o fecha de vencimiento)
+// Función para renovar la cuenta del usuario desde la fecha adecuada
 window.renovarUsuario = async function (userId, months) {
   try {
     const userRef = doc(db, "users", userId);
@@ -162,7 +162,7 @@ window.renovarUsuario = async function (userId, months) {
         expirationDate = now; // Si está vencido, iniciar renovación desde hoy
       }
 
-      // Sumar los meses a la fecha de inicio de la renovación (fecha actual o fecha de vencimiento)
+      // Sumar los meses a la fecha de inicio de la renovación
       expirationDate.setMonth(expirationDate.getMonth() + months);
 
       await updateDoc(userRef, { expirationDate: expirationDate });
@@ -176,18 +176,17 @@ window.renovarUsuario = async function (userId, months) {
 };
 
 // Función para eliminar usuario
-window.eliminarUsuario = async function (userId, email) {
+window.eliminarUsuario = async function (userId) {
   try {
     // Eliminar de Firestore Database
     await deleteDoc(doc(db, "users", userId));
 
-    // Eliminar de Firebase Authentication
+    // Eliminar usuario de Firebase Authentication
     const user = auth.currentUser; // Usuario autenticado
-    if (user.email === email) {
+    if (user.uid === userId) {
       throw new Error("No puedes eliminar tu propia cuenta.");
     }
-    const userToDelete = await auth.getUserByEmail(email); // Obtener el usuario a eliminar
-    await deleteUser(userToDelete);
+    await deleteUser(user);
 
     alert("Usuario eliminado exitosamente de ambos sistemas.");
     listarUsuarios(); // Actualizar la lista
