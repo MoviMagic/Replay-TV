@@ -19,26 +19,38 @@ const successMessage = document.getElementById("successMessage");
 courseForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const name = document.getElementById("name").value;
+    // Obtener valores del formulario
+    const name = document.getElementById("name").value.trim(); // Usaremos esto como el ID del documento
     const addedDate = document.getElementById("addedDate").value;
-    const duration = document.getElementById("duration").value;
-    const posterUrl = document.getElementById("posterUrl").value;
-    const videoUrl = document.getElementById("videoUrl").value;
+    const duration = document.getElementById("duration").value.trim();
+    const posterUrl = document.getElementById("posterUrl").value.trim();
+    const videoUrl = document.getElementById("videoUrl").value.trim();
 
     try {
-        // Convertir la fecha seleccionada en un Timestamp de Firestore
+        if (!name) {
+            alert("El nombre del curso es obligatorio.");
+            return;
+        }
+
+        // Convertir la fecha en un Timestamp
         const timestamp = addedDate ? firebase.firestore.Timestamp.fromDate(new Date(addedDate)) : null;
 
-        // Agregar curso a Firestore
-        await db.collection("cursos").add({
-            name: name,
+        if (!timestamp) {
+            alert("La fecha de adición es obligatoria.");
+            return;
+        }
+
+        // Agregar documento con ID personalizado (nombre del curso)
+        await db.collection("cursos").doc(name).set({
             addedDate: timestamp,
             duration: duration,
+            name: name,
             posterUrl: posterUrl,
             videoUrl: videoUrl
         });
 
         // Mostrar mensaje de éxito
+        successMessage.textContent = "Curso agregado con éxito!";
         successMessage.classList.remove("hidden");
         setTimeout(() => successMessage.classList.add("hidden"), 3000);
 
@@ -46,5 +58,6 @@ courseForm.addEventListener("submit", async (e) => {
         courseForm.reset();
     } catch (error) {
         console.error("Error al agregar el curso: ", error);
+        alert("Ocurrió un error al agregar el curso. Verifica la consola para más detalles.");
     }
 });
