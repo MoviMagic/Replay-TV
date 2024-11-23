@@ -134,7 +134,7 @@ async function listarUsuarios(filter = "") {
             <button onclick="renovarUsuario('${userId}', 3)">Renovar 3 meses</button>
             <button onclick="renovarUsuario('${userId}', 6)">Renovar 6 meses</button>
             <button onclick="renovarUsuario('${userId}', 12)">Renovar 12 meses</button>
-            <button onclick="eliminarUsuario('${userId}')">Eliminar Usuario</button>
+            <button onclick="eliminarUsuario('${userId}', '${userData.email}')">Eliminar Usuario</button>
           </div>
         `;
         usersContainer.appendChild(userElement);
@@ -176,14 +176,21 @@ window.renovarUsuario = async function (userId, months) {
 };
 
 // Función para eliminar usuario
-window.eliminarUsuario = async function (userId) {
+window.eliminarUsuario = async function (userId, email) {
   try {
     // Eliminar de Firestore Database
     await deleteDoc(doc(db, "users", userId));
 
-    // Actualizar la lista
-    alert("Usuario eliminado exitosamente.");
-    listarUsuarios();
+    // Eliminar de Firebase Authentication
+    const user = auth.currentUser; // Usuario autenticado
+    if (user.email === email) {
+      throw new Error("No puedes eliminar tu propia cuenta.");
+    }
+    const userToDelete = await auth.getUserByEmail(email); // Obtener el usuario a eliminar
+    await deleteUser(userToDelete);
+
+    alert("Usuario eliminado exitosamente de ambos sistemas.");
+    listarUsuarios(); // Actualizar la lista
   } catch (error) {
     console.error("Error al eliminar usuario:", error);
     alert("Error al eliminar usuario: " + error.message);
