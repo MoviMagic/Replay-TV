@@ -33,48 +33,40 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Función para eliminar un usuario
-window.eliminarUsuario = async function (userId) {
-  const confirmDelete = confirm("¿Estás seguro de que deseas eliminar este usuario?");
-  if (!confirmDelete) return;
+// Manejo del Inicio de Sesión
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('admin-email').value;
+  const password = document.getElementById('admin-password').value;
 
   try {
-    // Obtener las credenciales del usuario a eliminar desde Firestore
-    const userDoc = await getDoc(doc(db, "users", userId));
-    if (!userDoc.exists()) {
-      alert("Usuario no encontrado en Firestore.");
-      return;
-    }
-
-    // Obtener email y contraseña para volver a autenticar antes de eliminar
-    const userData = userDoc.data();
-    const { email, password } = userData;
-
-    // Reautenticar como el usuario para obtener permisos de eliminación
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Eliminar el usuario de Firebase Authentication
-    await deleteUser(user);
+    const adminDoc = await getDoc(doc(db, 'adminUsers', user.uid));
+    if (!adminDoc.exists() || adminDoc.data().role !== 'admin') {
+      alert("No tienes permisos para acceder al panel administrativo.");
+      await signOut(auth);
+      return;
+    }
 
-    // Eliminar el usuario de Firestore
-    await deleteDoc(doc(db, "users", userId));
-
-    alert("Usuario eliminado correctamente.");
-    listarUsuarios(auth.currentUser.uid);
+    document.getElementById('login-modal').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('admin-email-display').innerText = `Administrador: ${email}`;
+    listarUsuarios();
   } catch (error) {
-    console.error("Error al eliminar usuario:", error);
-    alert("Error al eliminar usuario: " + error.message);
+    console.error("Error al iniciar sesión:", error);
+    alert("Error al iniciar sesión: " + error.message);
   }
-};
+});
 
-// Función para listar usuarios
-async function listarUsuarios(adminUID) {
+// Listar Usuarios
+async function listarUsuarios() {
   const usersContainer = document.getElementById('users-list');
   usersContainer.innerHTML = '';
 
   try {
-    const q = query(collection(db, 'users'), where("adminId", "==", adminUID));
+    const q = query(collection(db, 'users'));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
@@ -84,22 +76,33 @@ async function listarUsuarios(adminUID) {
         const userData = doc.data();
 
         const userElement = document.createElement('div');
-        userElement.classList.add('user-item');
         userElement.innerHTML = `
           <p><strong>Nombre:</strong> ${userData.username}</p>
           <p><strong>Email:</strong> ${userData.email}</p>
-          <p><strong>Fecha de Expiración:</strong> ${new Date(userData.expirationDate).toLocaleDateString()}</p>
-          <div class="user-actions">
-            <button onclick="editarUsuario('${doc.id}')">Editar Usuario</button>
-            <button onclick="eliminarUsuario('${doc.id}')">Eliminar Usuario</button>
-            <button onclick="renovarUsuario('${doc.id}', 1)">Renovar 1 mes</button>
-          </div>
+          <button onclick="eliminarUsuario('${doc.id}')">Eliminar Usuario</button>
         `;
         usersContainer.appendChild(userElement);
       });
     }
   } catch (error) {
     console.error("Error al listar usuarios:", error);
-    usersContainer.innerHTML = `<p>Error al cargar usuarios: ${error.message}</p>`;
   }
 }
+
+// Eliminar Usuario
+window.eliminarUsuario = async function (userId) {
+  try {
+    await deleteDoc(doc(db, 'users', userId));
+    alert("Usuario eliminado correctamente.");
+    listarUsuarios();
+  } catch (error) {
+    console.error("Error al eliminar usuario:", error);
+    alert("Error al eliminar usuario: " + error.message);
+  }
+};
+
+// Cerrar Sesión
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  await signOut(auth);
+  location.reload();
+});
