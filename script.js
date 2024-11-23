@@ -4,8 +4,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
-  signOut,
-  deleteUser
+  signOut
 } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import {
   getFirestore,
@@ -41,15 +40,15 @@ onAuthStateChanged(auth, async (user) => {
       if (isAdmin) {
         mostrarPanelAdmin(user);
       } else {
-        alert("Acceso denegado. Solo el administrador puede acceder al panel.");
         await signOut(auth);
-        location.reload();
+        mostrarLogin();
+        alert("Acceso denegado. Solo el administrador puede acceder al panel.");
       }
     } catch (error) {
       console.error("Error verificando administrador:", error);
-      alert("Error en el sistema. Por favor, intenta nuevamente.");
       await signOut(auth);
-      location.reload();
+      mostrarLogin();
+      alert("Error en el sistema. Por favor, intenta nuevamente.");
     }
   } else {
     mostrarLogin();
@@ -108,9 +107,11 @@ document.getElementById("user-form").addEventListener("submit", async (e) => {
   }
 
   try {
+    // Crear usuario en Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
 
+    // Guardar usuario en Firestore Database
     await setDoc(doc(db, "users", uid), {
       username,
       email,
