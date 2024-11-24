@@ -27,8 +27,12 @@ loginForm.addEventListener("submit", async (e) => {
   const password = document.getElementById("admin-login-password").value;
 
   try {
+    // Configurar persistencia de sesión a 'local'
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
     const userDoc = await db.collection("adminUsers").doc(userCredential.user.uid).get();
+
     if (userDoc.exists && userDoc.data().role === "admin") {
       loginContainer.classList.add("hidden");
       userManagementContainer.classList.remove("hidden");
@@ -40,6 +44,20 @@ loginForm.addEventListener("submit", async (e) => {
     document.getElementById("login-error").classList.remove("hidden");
   }
 });
+
+// Verificar si el usuario sigue autenticado al cargar la página
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    db.collection("adminUsers").doc(user.uid).get().then((doc) => {
+      if (doc.exists && doc.data().role === "admin") {
+        loginContainer.classList.add("hidden");
+        userManagementContainer.classList.remove("hidden");
+        loadUsers();
+      }
+    });
+  }
+});
+
 
 // Logout
 document.getElementById("logout-btn").addEventListener("click", () => {
