@@ -1,54 +1,60 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generador de Canales - Dashboard</title>
-  <link rel="stylesheet" href="styles_channels.css">
-  <script type="module" src="channels_script.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Canales - Dashboard</title>
+    <link rel="stylesheet" href="styles_channels.css">
+    <script type="module" src="channels_script.js"></script>
 </head>
-
 <body>
-  <div class="dashboard">
-    <header class="header">
-      <h1>Generador de Canales</h1>
-    </header>
-    <main class="content">
-      <!-- Formulario para agregar canal -->
-      <section class="form-section">
-        <h2>Agregar Canal</h2>
-        <form id="channel-form">
-          <input type="text" id="name" placeholder="Nombre del canal (ejemplo: Canal Nacional)" required>
-          <input type="url" id="logoUrl" placeholder="URL del logo (ejemplo: https://example.com/logo.png)" required>
-          <input type="url" id="streamUrl" placeholder="URL del stream (ejemplo: https://example.com/stream.m3u8)" required>
-          <label for="category">Categoría:</label>
-          <select id="category" required>
-            <option value="">Seleccione una categoría</option>
-            <option value="Cine Vip">Cine Vip</option>
-            <option value="Cine Retro">Cine Retro</option>
-            <option value="Cine 24/7">Cine 24/7</option>
-            <option value="Cultura">Cultura</option>
-            <option value="Anime">Anime</option>
-            <option value="Infantil">Infantil</option>
-            <option value="Música">Música</option>
-            <option value="Deportes">Deportes</option>
-          </select>
-          <button type="submit">Agregar Canal</button>
-        </form>
-      </section>
+    <div class="dashboard">
+        <header class="header">
+            <h1>Generador de Canales</h1>
+        </header>
+        <main class="content">
+            <!-- Formulario para agregar canal -->
+            <section class="form-section">
+                <h2>Agregar Canal</h2>
+                <form id="channel-form">
+                    <input type="text" id="name" placeholder="Nombre del canal (ejemplo: Canal Nacional)" required>
+                    <input type="url" id="logoUrl" placeholder="URL del logo (ejemplo: https://example.com/logo.png)" required>
+                    <input type="url" id="streamUrl" placeholder="URL del stream (ejemplo: https://example.com/stream.m3u8)" required>
+                    <label for="category">Categoría:</label>
+                    <select id="category" required>
+                        <option value="">Seleccione una categoría</option>
+                        <option value="Cine Vip">Cine Vip</option>
+                        <option value="Cine Retro">Cine Retro</option>
+                        <option value="Cine 24/7">Cine 24/7</option>
+                        <option value="Cultura">Cultura</option>
+                        <option value="Anime">Anime</option>
+                        <option value="Infantil">Infantil</option>
+                        <option value="Música">Música</option>
+                        <option value="Deportes">Deportes</option>
+                    </select>
+                    <button type="submit">Agregar Canal</button>
+                </form>
+            </section>
 
-      <!-- Sección para eliminar canal -->
-      <section class="actions-section">
-        <h2>Eliminar Canal</h2>
-        <form id="delete-channel-form">
-          <input type="text" id="delete-name" placeholder="Nombre del canal a eliminar" required>
-          <button type="submit" class="danger-btn">Eliminar Canal</button>
-        </form>
-        <p id="message"></p>
-      </section>
-    </main>
-  </div>
+            <!-- Sección para verificar canal -->
+            <section class="actions-section">
+                <h2>Verificar Canal</h2>
+                <form id="verify-channel-form">
+                    <input type="text" id="verify-name" placeholder="Nombre del canal a verificar" required>
+                    <button type="button" id="verify-channel-btn">Verificar Canal</button>
+                </form>
+                <p id="message"></p>
+            </section>
+
+            <!-- Sección para eliminar canal -->
+            <section class="actions-section">
+                <h2>Eliminar Canal</h2>
+                <form id="delete-channel-form">
+                    <input type="text" id="delete-name" placeholder="Nombre del canal a eliminar" required>
+                    <button type="submit" class="danger-btn">Eliminar Canal</button>
+                </form>
+            </section>
+        </main>
+    </div>
 </body>
-
 </html>
