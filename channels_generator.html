@@ -15,7 +15,7 @@
       <h1>Generador de Canales</h1>
     </header>
     <main class="content">
-      <!-- Formulario -->
+      <!-- Formulario para agregar canal -->
       <section class="form-section">
         <h2>Agregar Canal</h2>
         <form id="channel-form">
@@ -38,9 +38,13 @@
         </form>
       </section>
 
-      <!-- Acciones y Mensajes -->
+      <!-- Sección para eliminar canal -->
       <section class="actions-section">
-        <h2>Acciones</h2>
+        <h2>Eliminar Canal</h2>
+        <form id="delete-channel-form">
+          <input type="text" id="delete-name" placeholder="Nombre del canal a eliminar" required>
+          <button type="submit" class="danger-btn">Eliminar Canal</button>
+        </form>
         <p id="message"></p>
       </section>
     </main>

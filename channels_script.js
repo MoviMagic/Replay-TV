@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -20,12 +20,12 @@ const auth = getAuth(app);
 
 let currentUser = null;
 
-// Asegurarse de que el usuario esté autenticado antes de proceder
+// Verificar autenticación
 onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUser = user;
   } else {
-    alert("Debe iniciar sesión para agregar un canal.");
+    alert("Debe iniciar sesión para gestionar los canales.");
     return;
   }
 });
@@ -60,5 +60,33 @@ document.getElementById('channel-form').addEventListener('submit', async (e) => 
     document.getElementById('message').innerText = "Canal agregado o actualizado exitosamente";
   } catch (error) {
     document.getElementById('message').innerText = "Error al agregar el canal: " + error.message;
+  }
+});
+
+// Manejar la eliminación del canal
+document.getElementById('delete-channel-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!currentUser) {
+    alert("Debe iniciar sesión para eliminar un canal.");
+    return;
+  }
+
+  // Obtener el nombre del canal a eliminar
+  const deleteName = document.getElementById('delete-name').value.trim();
+  if (!deleteName) {
+    alert("Por favor, ingrese el nombre del canal a eliminar.");
+    return;
+  }
+
+  // Generar el id del documento a partir del nombre del canal
+  const documentId = deleteName.toLowerCase().replace(/\s+/g, '-');
+
+  try {
+    // Eliminar el documento del canal
+    await deleteDoc(doc(db, 'channels', documentId));
+    document.getElementById('message').innerText = "Canal eliminado exitosamente";
+  } catch (error) {
+    document.getElementById('message').innerText = "Error al eliminar el canal: " + error.message;
   }
 });
