@@ -41,7 +41,15 @@
             </div>
             <button type="submit">Agregar Video</button>
         </form>
-        <div id="successMessage" class="hidden">Video agregado con éxito!</div>
+        <hr>
+        <form id="deleteVideoForm">
+            <div class="form-group">
+                <label for="deleteTitle">Eliminar Video Publicitario (Título Principal)</label>
+                <input type="text" id="deleteTitle" placeholder="Ejemplo: Películas 2024" required>
+            </div>
+            <button type="submit" class="delete-button">Eliminar Video</button>
+        </form>
+        <div id="successMessage" class="hidden">Operación realizada con éxito!</div>
     </div>
 
     <script src="featuredVideos_script.js"></script>

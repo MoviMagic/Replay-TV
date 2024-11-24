@@ -20,7 +20,7 @@ async function isAdmin(user) {
     return userDoc.exists && userDoc.data().role === "admin";
 }
 
-// Manejar el evento de envío del formulario
+// Manejar el evento de envío del formulario de agregar video
 const adVideoForm = document.getElementById("adVideoForm");
 
 adVideoForm.addEventListener("submit", async (e) => {
@@ -68,6 +68,46 @@ adVideoForm.addEventListener("submit", async (e) => {
     } catch (error) {
         console.error("Error al agregar el video publicitario:", error);
         alert("Error al agregar el video. Verifica la consola para más detalles.");
+    }
+});
+
+// Manejar el evento de envío del formulario de eliminar video
+const deleteVideoForm = document.getElementById("deleteVideoForm");
+
+deleteVideoForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    try {
+        // Validar si el usuario está autenticado
+        const user = auth.currentUser;
+        if (!user) {
+            alert("No estás autenticado. Por favor, inicia sesión.");
+            return;
+        }
+
+        // Verificar permisos de administrador
+        const isUserAdmin = await isAdmin(user);
+        if (!isUserAdmin) {
+            alert("No tienes permisos para eliminar videos publicitarios.");
+            return;
+        }
+
+        // Obtener el título del video a eliminar
+        const deleteTitle = document.getElementById("deleteTitle").value.trim();
+
+        if (!deleteTitle) {
+            alert("Por favor, ingresa el título del video publicitario.");
+            return;
+        }
+
+        // Eliminar documento de la colección "featuredVideos"
+        await db.collection("featuredVideos").doc(deleteTitle).delete();
+
+        alert("Video publicitario eliminado con éxito.");
+        deleteVideoForm.reset(); // Limpiar el formulario
+    } catch (error) {
+        console.error("Error al eliminar el video publicitario:", error);
+        alert("Error al eliminar el video. Verifica la consola para más detalles.");
     }
 });
 

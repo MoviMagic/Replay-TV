@@ -85,6 +85,27 @@ button:active {
     display: none;
 }
 
+.delete-button {
+    background-color: #e74c3c; /* Rojo */
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 1rem;
+    padding: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.delete-button:hover {
+    background-color: #c0392b;
+    transform: scale(1.02);
+}
+
+.delete-button:active {
+    transform: scale(0.98);
+}
+
+
 #successMessage {
     margin-top: 15px;
     text-align: center;
