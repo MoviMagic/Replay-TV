@@ -20,28 +20,6 @@ const loginContainer = document.getElementById("login-container");
 const userList = document.getElementById("user-list");
 const deviceList = document.getElementById("device-list");
 
-// Configurar persistencia de sesión
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((error) => {
-  console.error("Error configurando persistencia de sesión:", error);
-});
-
-// Verificar si hay un usuario autenticado al cargar la página
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    const userDoc = await db.collection("adminUsers").doc(user.uid).get();
-    if (userDoc.exists && userDoc.data().role === "admin") {
-      loginContainer.classList.add("hidden");
-      userManagementContainer.classList.remove("hidden");
-      loadUsers();
-    } else {
-      auth.signOut(); // Si no es administrador, cerrar sesión
-    }
-  } else {
-    loginContainer.classList.remove("hidden");
-    userManagementContainer.classList.add("hidden");
-  }
-});
-
 // Login
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -77,7 +55,7 @@ async function loadUsers() {
   userList.innerHTML = "";
   querySnapshot.forEach((doc) => {
     const data = doc.data();
-    userList.innerHTML += 
+    userList.innerHTML += `
       <tr>
         <td>${data.username}</td>
         <td>${data.email}</td>
@@ -91,7 +69,7 @@ async function loadUsers() {
           <button onclick="deleteUser('${doc.id}')">Eliminar</button>
           <button onclick="loadDevices('${doc.id}')">Ver Dispositivos</button>
         </td>
-      </tr>;
+      </tr>`;
   });
 }
 
@@ -157,13 +135,13 @@ async function loadDevices(userId) {
   const querySnapshot = await devicesRef.get();
   deviceList.innerHTML = "";
   querySnapshot.forEach((doc) => {
-    deviceList.innerHTML += 
+    deviceList.innerHTML += `
       <tr>
         <td>${doc.id}</td>
         <td>
           <button onclick="deleteDevice('${userId}', '${doc.id}')">Eliminar</button>
         </td>
-      </tr>;
+      </tr>`;
   });
 }
 
@@ -171,4 +149,4 @@ async function loadDevices(userId) {
 async function deleteDevice(userId, deviceId) {
   await db.collection("users").doc(userId).collection("devices").doc(deviceId).delete();
   loadDevices(userId);
-}
+} 
