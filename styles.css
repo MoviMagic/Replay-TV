@@ -54,6 +54,7 @@ button:hover {
   background-color: #357ab8;
 }
 
+/* Estilos de la tabla */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -130,6 +131,7 @@ nav {
   }
 }
 
+/* Compactar tabla en pantallas pequeñas */
 @media (max-width: 480px) {
   h1 {
     font-size: 1rem;
@@ -139,15 +141,43 @@ nav {
     font-size: 0.9rem;
   }
 
+  /* Cambiar el diseño de la tabla a tarjetas */
   table {
-    font-size: 0.7rem; /* Reducir aún más en pantallas pequeñas */
+    display: block;
+    border: none;
+    font-size: 0.8rem;
   }
 
-  th, td {
-    padding: 0.2rem;
+  thead {
+    display: none; /* Ocultar encabezado en pantallas pequeñas */
+  }
+
+  tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid #ffffff;
+    padding: 0.5rem;
+    border-radius: 5px;
+  }
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.3rem 0;
+    border: none; /* Eliminar bordes entre celdas */
+  }
+
+  td:before {
+    content: attr(data-label); /* Usar el atributo data-label como etiqueta */
+    font-weight: bold;
+    text-transform: capitalize;
+    color: #4a90e2;
+    margin-right: 0.5rem;
   }
 }
 
+/* Ajustes para pantallas verticales */
 @media (orientation: portrait) {
   header {
     flex-direction: column;

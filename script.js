@@ -79,11 +79,11 @@ async function loadUsers() {
     const data = doc.data();
     userList.innerHTML += `
       <tr>
-        <td>${data.username}</td>
-        <td>${data.email}</td>
-        <td>${data.password}</td>
-        <td>${data.expirationDate.toDate().toLocaleDateString()}</td>
-        <td>
+        <td data-label="Nombre de Usuario">${data.username}</td>
+        <td data-label="Correo">${data.email}</td>
+        <td data-label="Contraseña">${data.password}</td>
+        <td data-label="Fecha de Expiración">${data.expirationDate.toDate().toLocaleDateString()}</td>
+        <td data-label="Acciones">
           <button onclick="renewUser('${doc.id}', 1)">+1 Mes</button>
           <button onclick="renewUser('${doc.id}', 3)">+3 Meses</button>
           <button onclick="renewUser('${doc.id}', 6)">+6 Meses</button>
@@ -159,7 +159,7 @@ async function loadDevices(userId) {
   querySnapshot.forEach((doc) => {
     deviceList.innerHTML += `
       <tr>
-        <td>${doc.id}</td>
+        <td data-label="Nombre del Dispositivo">${doc.id}</td>
         <td>
           <button onclick="deleteDevice('${userId}', '${doc.id}')">Eliminar</button>
         </td>
