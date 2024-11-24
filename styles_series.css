@@ -1,9 +1,10 @@
-/* Estilos Generales */
+/* Estilo General */
 body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #141b29;
+  color: #fff;
   margin: 0;
-  font-family: 'Roboto', Arial, sans-serif;
-  background-color: #10182b;
-  color: #ffffff;
+  padding: 0;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -16,15 +17,15 @@ body {
 .dashboard-container {
   width: 100%;
   max-width: 1200px;
-  background-color: #16233c;
+  background-color: #1c2634;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Encabezado */
 header {
-  background-color: #1f80e0;
+  background-color: #4a90e2;
   padding: 20px;
   text-align: center;
   border-bottom: 2px solid #144a73;
@@ -75,7 +76,7 @@ form {
 }
 
 input, select, button {
-  padding: 10px;
+  padding: 12px;
   border-radius: 5px;
   border: none;
   font-size: 1rem;
@@ -88,7 +89,7 @@ input::placeholder {
 }
 
 select {
-  background-color: #162a40;
+  background-color: #2a3742;
   color: #ffffff;
 }
 
@@ -97,41 +98,13 @@ button {
   transition: background-color 0.3s;
 }
 
-/* Temporadas y episodios */
-.seasons-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* Separación entre temporadas */
-}
-
-.season {
-  padding: 10px;
-  border: 1px solid #144a73; /* Bordes entre temporadas */
-  border-radius: 5px;
-  background-color: #253549;
-}
-
-.episodes-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* Separación entre episodios */
-  margin-top: 10px; /* Espacio entre el botón y los episodios */
-}
-
-.episodes-container input {
-  background-color: #162a40;
-  color: white;
-  border: 1px solid #144a73;
-}
-
-/* Botones */
 .primary-btn {
-  background-color: #1f80e0;
+  background-color: #4a90e2;
   color: white;
 }
 
 .primary-btn:hover {
-  background-color: #144a73;
+  background-color: #357ab7;
 }
 
 .secondary-btn {
@@ -152,7 +125,34 @@ button {
   background-color: #b22234;
 }
 
-/* Media Queries */
+/* Temporadas y episodios */
+.seasons-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.season {
+  padding: 10px;
+  border: 1px solid #144a73;
+  border-radius: 5px;
+  background-color: #253549;
+}
+
+.episodes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.episodes-container input {
+  background-color: #2a3742;
+  color: white;
+  border: 1px solid #144a73;
+}
+
+/* Responsivo */
 @media (max-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
