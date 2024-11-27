@@ -14,13 +14,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Función para verificar si el usuario es administrador
-async function isAdmin(user) {
-    const userDoc = await db.collection("adminUsers").doc(user.uid).get();
-    return userDoc.exists && userDoc.data().role === "admin";
-}
-
-// Manejar el evento de envío del formulario de agregar video
+// Manejar el evento de envío del formulario
 const adVideoForm = document.getElementById("adVideoForm");
 
 adVideoForm.addEventListener("submit", async (e) => {
@@ -34,80 +28,30 @@ adVideoForm.addEventListener("submit", async (e) => {
             return;
         }
 
-        // Verificar permisos de administrador
-        const isUserAdmin = await isAdmin(user);
-        if (!isUserAdmin) {
-            alert("No tienes permisos para agregar videos publicitarios.");
-            return;
-        }
-
         // Obtener los valores del formulario
         const title = document.getElementById("title").value.trim();
         const videoTitle = document.getElementById("videoTitle").value.trim();
-        const description = document.getElementById("description").value.trim();
         const videoUrl = document.getElementById("videoUrl").value.trim();
         const isActive = document.getElementById("isActive").value === "true";
 
         // Validar los campos
-        if (!title || !videoTitle || !description || !videoUrl) {
+        if (!title || !videoTitle || !videoUrl) {
             alert("Por favor, completa todos los campos del formulario.");
             return;
         }
 
-        // Agregar documento a la colección "featuredVideos"
+        // Agregar o actualizar el documento en la colección "featuredVideos"
         await db.collection("featuredVideos").doc(title).set({
-            title: title,
             videoTitle: videoTitle,
-            description: description,
             videoUrl: videoUrl,
             isActive: isActive
-        });
+        }, { merge: true });
 
-        alert("Video publicitario agregado con éxito.");
+        alert("Video publicitario agregado o actualizado con éxito.");
         adVideoForm.reset(); // Limpiar el formulario
     } catch (error) {
-        console.error("Error al agregar el video publicitario:", error);
-        alert("Error al agregar el video. Verifica la consola para más detalles.");
-    }
-});
-
-// Manejar el evento de envío del formulario de eliminar video
-const deleteVideoForm = document.getElementById("deleteVideoForm");
-
-deleteVideoForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    try {
-        // Validar si el usuario está autenticado
-        const user = auth.currentUser;
-        if (!user) {
-            alert("No estás autenticado. Por favor, inicia sesión.");
-            return;
-        }
-
-        // Verificar permisos de administrador
-        const isUserAdmin = await isAdmin(user);
-        if (!isUserAdmin) {
-            alert("No tienes permisos para eliminar videos publicitarios.");
-            return;
-        }
-
-        // Obtener el título del video a eliminar
-        const deleteTitle = document.getElementById("deleteTitle").value.trim();
-
-        if (!deleteTitle) {
-            alert("Por favor, ingresa el título del video publicitario.");
-            return;
-        }
-
-        // Eliminar documento de la colección "featuredVideos"
-        await db.collection("featuredVideos").doc(deleteTitle).delete();
-
-        alert("Video publicitario eliminado con éxito.");
-        deleteVideoForm.reset(); // Limpiar el formulario
-    } catch (error) {
-        console.error("Error al eliminar el video publicitario:", error);
-        alert("Error al eliminar el video. Verifica la consola para más detalles.");
+        console.error("Error al agregar o actualizar el video publicitario:", error);
+        alert("Error al procesar el video. Verifica la consola para más detalles.");
     }
 });
 

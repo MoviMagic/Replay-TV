@@ -43,7 +43,7 @@ label {
     color: #ccc;
 }
 
-input, select {
+input {
     width: 100%;
     padding: 12px;
     border: 1px solid #3a4a5a;
@@ -54,7 +54,7 @@ input, select {
     transition: border-color 0.3s ease;
 }
 
-input:focus, select:focus {
+input:focus {
     border-color: #4a90e2;
     outline: none;
     box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
@@ -85,27 +85,6 @@ button:active {
     display: none;
 }
 
-.delete-button {
-    background-color: #e74c3c; /* Rojo */
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 1rem;
-    padding: 12px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.delete-button:hover {
-    background-color: #c0392b;
-    transform: scale(1.02);
-}
-
-.delete-button:active {
-    transform: scale(0.98);
-}
-
-
 #successMessage {
     margin-top: 15px;
     text-align: center;
@@ -122,7 +101,7 @@ button:active {
         font-size: 1.5rem;
     }
 
-    input, select, button {
+    input, button {
         font-size: 0.9rem;
         padding: 10px;
     }
@@ -132,7 +111,6 @@ button:active {
     }
 }
 
-/* Animación para un efecto de entrada suave */
 @keyframes fadeIn {
     from {
         opacity: 0;
